@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClimaObra Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root {
+    --bg:      #f1f5f9;
+    --surface: #ffffff;
+    --border:  #e2e8f0;
+    --accent:  #d97706;
+    --rain:    #dc2626;
+    --wind:    #2563eb;
+    --temp:    #d97706;
+    --lost:    #dc2626;
+    --text:    #1e293b;
+    --muted:   #64748b;
+    --radius:  12px;
+    --shadow:  0 1px 3px rgba(0,0,0,0.08);
+    --map-w:   220px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; display: flex; flex-direction: column; }
+
+  /* LOGIN */
+  #login-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    gap: 24px;
+  }
+  .login-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 48px 40px;
+    max-width: 380px;
+    width: 100%;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .login-logo  { font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; color: var(--accent); letter-spacing: 2px; margin-bottom: 8px; }
+  .login-sub   { font-size: 0.82rem; color: var(--muted); margin-bottom: 32px; }
+  .login-title { font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .login-desc  { font-size: 0.78rem; color: var(--muted); margin-bottom: 24px; line-height: 1.5; }
+  #g-btn-wrap  { display: flex; justify-content: center; }
+
+  /* ACCESO DENEGADO */
+  #denied-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+  .denied-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 48px 40px;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .denied-icon  { font-size: 3.5rem; margin-bottom: 20px; display: block; }
+  .denied-title { font-size: 1rem; font-weight: 600; margin-bottom: 10px; }
+  .denied-msg   { font-size: 0.82rem; color: var(--muted); line-height: 1.6; margin-bottom: 20px; }
+  .denied-email { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 0.78rem; color: var(--muted); margin-bottom: 24px; }
+  .btn-logout   { padding: 8px 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-size: 0.78rem; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .btn-logout:hover { background: #f8fafc; }
+
+  /* LOADING */
+  #loading-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    gap: 16px;
+  }
+  .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* APP */
+  #app { display: none; flex-direction: column; height: 100%; }
+
+  /* ZONA FIJA */
+  #top-fixed { flex-shrink: 0; background: var(--bg); padding: 10px 16px 0; }
+  #top-block  { display: flex; gap: 10px; align-items: stretch; margin-bottom: 10px; }
+  #top-left   { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+  #top-header {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 10px 16px;
+    box-shadow: var(--shadow); display: flex; align-items: center; gap: 12px;
+  }
+  .logo        { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; color: var(--accent); letter-spacing: 2px; white-space: nowrap; }
+  .header-info { flex: 1; min-width: 0; }
+  .obra-name   { font-size: 0.9rem; color: var(--text); font-weight: 600; }
+  .header-sub  { font-size: 0.68rem; color: var(--muted); margin-top: 1px; }
+  .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .last-update  { font-size: 0.68rem; color: var(--muted); text-align: right; line-height: 1.5; white-space: nowrap; }
+  .user-badge   { font-size: 0.68rem; color: var(--surface); background: var(--accent); padding: 2px 10px; border-radius: 10px; white-space: nowrap; }
+  .btn-signout  { font-size: 0.62rem; color: var(--muted); background: none; border: none; cursor: pointer; text-decoration: underline; font-family: 'DM Sans', sans-serif; }
+
+  #cards-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; position: relative; overflow: hidden; box-shadow: var(--shadow); }
+  .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent); }
+  .card-rain::before { background: var(--rain); }
+  .card-wind::before { background: var(--wind); }
+  .card-hum::before  { background: #7c3aed; }
+  .card-desc-card::before { background: #475569; }
+  .card-label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .card-value { font-family: 'Bebas Neue', sans-serif; font-size: 1.9rem; color: var(--text); line-height: 1; }
+  .card-unit  { font-size: 0.68rem; color: var(--muted); margin-top: 2px; }
+  .card-sub   { font-size: 0.68rem; color: var(--muted); margin-top: 3px; }
+  .card-desc-val { font-size: 0.85rem; color: var(--text); font-weight: 500; margin-top: 4px; line-height: 1.3; }
+
+  #map-col {
+    width: var(--map-w); flex-shrink: 0;
+    border-radius: var(--radius); overflow: hidden;
+    border: 1px solid var(--border); box-shadow: var(--shadow);
+    position: relative;
+  }
+  #map-col::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: #0891b2; z-index: 1; }
+  #osm-map { width: 100%; height: 100%; object-fit: cover; display: block; }
+  #map-marker {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -100%);
+    width: 20px; height: 28px; z-index: 10; pointer-events: none;
+  }
+
+  .divider { height: 1px; background: var(--border); margin: 0 0 14px; }
+  #scroll-area { flex: 1; overflow-y: auto; padding: 0 16px 48px; }
+
+  .section { margin-bottom: 24px; }
+  .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: var(--accent); letter-spacing: 2px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+  .section-title span { font-family: 'DM Sans', sans-serif; font-size: 0.7rem; color: var(--muted); letter-spacing: 0; font-weight: 400; }
+
+  .chart-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; overflow-x: auto; box-shadow: var(--shadow); }
+  .chart-wrap { min-width: 400px; height: 230px; }
+  .legend { display: flex; gap: 18px; margin-top: 10px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: var(--muted); }
+  .legend-dot  { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+  .heatmap-controls { display: flex; gap: 7px; margin-bottom: 10px; flex-wrap: wrap; }
+  .btn-sel { padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-size: 0.7rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.18s; box-shadow: var(--shadow); }
+  .btn-sel-active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .heatmap-scroll { overflow-x: auto; padding-bottom: 4px; }
+  .heatmap-wrap   { display: flex; gap: 3px; min-width: max-content; }
+  .hm-month       { display: flex; flex-direction: column; }
+  .hm-month-label { font-size: 0.56rem; color: var(--muted); text-align: center; margin-bottom: 3px; height: 11px; }
+  .hm-weeks { display: flex; gap: 3px; }
+  .hm-week  { display: flex; flex-direction: column; gap: 3px; }
+  .hm-day   { width: 12px; height: 12px; border-radius: 2px; background: var(--border); cursor: pointer; transition: transform 0.1s; }
+  .hm-day:hover { transform: scale(1.4); z-index: 10; }
+  .hm-nodata  { background: #e2e8f0 !important; opacity: 0.5; }
+  .hm-ok      { background: #bbf7d0; }
+  .hm-r1      { background: #bfdbfe; }
+  .hm-r2      { background: #60a5fa; }
+  .hm-r3      { background: #1d4ed8; }
+  .hm-w1      { background: #ddd6fe; }
+  .hm-w2      { background: #a78bfa; }
+  .hm-w3      { background: #6d28d9; }
+  .hm-perdido { background: var(--lost); }
+
+  #hm-tooltip { position: fixed; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 7px 11px; font-size: 0.7rem; pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 200; white-space: nowrap; line-height: 1.6; box-shadow: 0 4px 12px rgba(0,0,0,0.1); color: var(--text); }
+
+  .perdidos-bar { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; margin-top: 10px; box-shadow: var(--shadow); }
+  .perdidos-num   { font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; color: var(--lost); line-height: 1; }
+  .perdidos-label { font-size: 0.74rem; color: var(--muted); }
+  .perdidos-total { margin-left: auto; font-size: 0.7rem; color: var(--muted); text-align: right; }
+
+  .dias-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; }
+  .dia-row { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 0.78rem; box-shadow: var(--shadow); }
+  .dia-perdido { border-color: #fca5a5 !important; background: #fff5f5 !important; }
+  .dia-fecha { width: 80px; color: var(--muted); font-size: 0.7rem; }
+  .dia-badge { padding: 2px 7px; border-radius: 10px; font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .dia-badge-ok   { background: #dcfce7; color: #15803d; }
+  .dia-badge-lost { background: #fee2e2; color: #b91c1c; }
+  .dia-stats { display: flex; gap: 14px; margin-left: auto; }
+  .dia-stat  { display: flex; flex-direction: column; align-items: flex-end; }
+  .dia-stat-val { font-weight: 600; font-size: 0.8rem; }
+  .dia-stat-lbl { font-size: 0.58rem; color: var(--muted); }
+
+  @media (max-width: 900px) { #cards-row { grid-template-columns: repeat(3, 1fr); } :root { --map-w: 180px; } }
+  @media (max-width: 600px) { #top-block { flex-direction: column; } #map-col { width: 100%; height: 140px; } #cards-row { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+
+<!-- PANTALLA DE LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">&#127959; ClimaObra</div>
+    <div class="login-sub">Sistema de registro climatico para obra</div>
+    <div class="login-title">Iniciar sesion</div>
+    <div class="login-desc">Usa tu cuenta Google habilitada para acceder al dashboard.</div>
+    <div id="g-btn-wrap"></div>
+  </div>
+</div>
+
+<!-- PANTALLA DE CARGA -->
+<div id="loading-screen">
+  <div class="spinner"></div>
+  <div style="color:var(--muted);font-size:0.85rem;">Verificando acceso...</div>
+</div>
+
+<!-- PANTALLA ACCESO DENEGADO -->
+<div id="denied-screen">
+  <div class="denied-box">
+    <div class="login-logo">&#127959; ClimaObra</div>
+    <span class="denied-icon">&#128274;</span>
+    <div class="denied-title">Acceso restringido</div>
+    <div class="denied-msg">Tu usuario no esta registrado o no tiene acceso habilitado.</div>
+    <div class="denied-email" id="denied-email">-</div>
+    <div style="font-size:0.76rem;color:var(--muted);margin-bottom:20px;line-height:1.6;">
+      Comunicate con el administrador del sistema para solicitar acceso.
+    </div>
+    <button class="btn-logout" onclick="cerrarSesion()">Cerrar sesion e intentar con otra cuenta</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="app">
+  <div id="top-fixed">
+    <div id="top-block">
+      <div id="top-left">
+        <div id="top-header">
+          <div class="logo">&#127959; ClimaObra</div>
+          <div class="header-info">
+            <div class="obra-name" id="obra-name">-</div>
+            <div class="header-sub" id="header-sub">-</div>
+          </div>
+          <div class="header-right">
+            <div class="last-update" id="last-update">-</div>
+            <div class="user-badge" id="user-badge">-</div>
+            <button class="btn-signout" onclick="cerrarSesion()">Cerrar sesion</button>
+          </div>
+        </div>
+        <div id="cards-row">
+          <div class="card">
+            <div class="card-label">Temperatura</div>
+            <div class="card-value" id="c-temp">-</div>
+            <div class="card-unit">grados C</div>
+            <div class="card-sub" id="c-st">-</div>
+          </div>
+          <div class="card card-rain">
+            <div class="card-label">Precipitacion</div>
+            <div class="card-value" id="c-prec">-</div>
+            <div class="card-unit">mm</div>
+          </div>
+          <div class="card card-wind">
+            <div class="card-label">Viento</div>
+            <div class="card-value" id="c-viento">-</div>
+            <div class="card-unit">km/h</div>
+          </div>
+          <div class="card card-hum">
+            <div class="card-label">Humedad</div>
+            <div class="card-value" id="c-hum">-</div>
+            <div class="card-unit">%</div>
+          </div>
+          <div class="card card-desc-card">
+            <div class="card-label">Descripcion</div>
+            <div class="card-desc-val" id="c-desc">-</div>
+          </div>
+        </div>
+      </div>
+      <div id="map-col">
+        <img id="osm-map" src="" alt="Mapa">
+        <svg id="map-marker" viewBox="0 0 20 28" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 0C4.5 0 0 4.5 0 10c0 7.5 10 18 10 18s10-10.5 10-18C20 4.5 15.5 0 10 0z" fill="#dc2626"/>
+          <circle cx="10" cy="10" r="4" fill="white"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div id="scroll-area">
+    <div class="divider"></div>
+    <div class="section">
+      <div class="section-title">ULTIMOS 7 DIAS <span>temperatura - viento - lluvia</span></div>
+      <div class="chart-box">
+        <div class="chart-wrap"><canvas id="chart7"></canvas></div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--temp)"></div> Temp. promedio (C)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--wind)"></div> Viento max. (km/h)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--rain)"></div> Lluvia total (mm)</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;"><div class="dias-list" id="dias-list"></div></div>
+    </div>
+    <div class="section">
+      <div class="section-title">VISTA ANUAL <span>selecciona que visualizar</span></div>
+      <div class="heatmap-controls">
+        <button class="btn-sel btn-sel-active" id="btn-perdido" onclick="cambiarModo('perdido')">Dias perdidos</button>
+        <button class="btn-sel" id="btn-lluvia" onclick="cambiarModo('lluvia')">Lluvia</button>
+        <button class="btn-sel" id="btn-viento" onclick="cambiarModo('viento')">Viento</button>
+        <button class="btn-sel" id="btn-temp"   onclick="cambiarModo('temp')">Temperatura</button>
+      </div>
+      <div class="chart-box" style="padding:12px 14px;">
+        <div class="heatmap-scroll"><div class="heatmap-wrap" id="heatmap"></div></div>
+      </div>
+      <div class="perdidos-bar">
+        <div>
+          <div class="perdidos-num" id="pd-count">0</div>
+          <div class="perdidos-label">dias perdidos registrados</div>
+        </div>
+        <div class="perdidos-total" id="pd-config">-</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="hm-tooltip"></div>
+
+<script>
+// ── CONFIGURACION ─────────────────────────────────────────────
+var CLIENT_ID  = '985022387906-5h3qtmq6jifdl5jdv77o4amf9nb3mcdn.apps.googleusercontent.com';
+var API_URL    = 'REEMPLAZAR_CON_URL_DE_APPS_SCRIPT';
+// ─────────────────────────────────────────────────────────────
+
+var chart7Instance = null;
+var globalAnual    = [];
+var globalCfg      = {};
+var userEmail      = '';
+
+// ── GOOGLE IDENTITY ───────────────────────────────────────────
+window.onload = function() {
+  var guardado = sessionStorage.getItem('co_email');
+  if (guardado) {
+    userEmail = guardado;
+    mostrarCargando();
+    cargarDatos(guardado);
+    return;
+  }
+
+  google.accounts.id.initialize({
+    client_id: CLIENT_ID,
+    callback:  onLoginGoogle,
+    auto_select: false
+  });
+  google.accounts.id.renderButton(
+    document.getElementById('g-btn-wrap'),
+    { theme: 'outline', size: 'large', text: 'signin_with', locale: 'es' }
+  );
+};
+
+function onLoginGoogle(response) {
+  var payload = parseJwt(response.credential);
+  userEmail   = payload.email;
+  sessionStorage.setItem('co_email', userEmail);
+  mostrarCargando();
+  cargarDatos(userEmail);
+}
+
+function parseJwt(token) {
+  var base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+  return JSON.parse(decodeURIComponent(atob(base64).split('').map(function(c) {
+    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+  }).join('')));
+}
+
+function cerrarSesion() {
+  sessionStorage.removeItem('co_email');
+  google.accounts.id.disableAutoSelect();
+  mostrarLogin();
+}
+
+// ── PANTALLAS ─────────────────────────────────────────────────
+function mostrarLogin() {
+  document.getElementById('login-screen').style.display   = 'flex';
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('denied-screen').style.display  = 'none';
+  document.getElementById('app').style.display            = 'none';
+}
+function mostrarCargando() {
+  document.getElementById('login-screen').style.display   = 'none';
+  document.getElementById('loading-screen').style.display = 'flex';
+  document.getElementById('denied-screen').style.display  = 'none';
+  document.getElementById('app').style.display            = 'none';
+}
+function mostrarDenegado(email) {
+  document.getElementById('login-screen').style.display   = 'none';
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('denied-screen').style.display  = 'flex';
+  document.getElementById('app').style.display            = 'none';
+  document.getElementById('denied-email').textContent     = email;
+}
+function mostrarApp() {
+  document.getElementById('login-screen').style.display   = 'none';
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('denied-screen').style.display  = 'none';
+  document.getElementById('app').style.display            = 'flex';
+}
+
+// ── CARGA DE DATOS ────────────────────────────────────────────
+function cargarDatos(email) {
+  var url = API_URL + '?action=data&email=' + encodeURIComponent(email);
+  fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.error === 'acceso_denegado') {
+        mostrarDenegado(email);
+        return;
+      }
+      if (data.error) {
+        mostrarDenegado(email);
+        return;
+      }
+      iniciarDashboard(data);
+    })
+    .catch(function(err) {
+      document.getElementById('loading-screen').innerHTML =
+        '<div style="color:#dc2626;text-align:center;padding:20px">Error de conexion:<br>' + err.message + '</div>';
+    });
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────
+function iniciarDashboard(data) {
+  mostrarApp();
+  var cfg     = data.config;
+  globalCfg   = cfg;
+  globalAnual = data.anual;
+
+  document.getElementById('obra-name').textContent  = cfg.nombre || '-';
+  document.getElementById('header-sub').textContent =
+    'Lat ' + cfg.latitud + '  Lon ' + cfg.longitud +
+    '  Rango ' + cfg.horaInicio + ':00 - ' + cfg.horaFin + ':00 hs';
+  document.getElementById('user-badge').textContent =
+    data.usuarioNombre || userEmail;
+
+  if (data.ultimo) {
+    document.getElementById('last-update').innerHTML =
+      'Ultimo registro<br><strong>' + data.ultimo.timestamp + '</strong>';
+    renderTarjetas(data.ultimo);
+  }
+
+  // Mapa OSM
+  var lat  = cfg.latitud;
+  var lon  = cfg.longitud;
+  var mapCol = document.getElementById('map-col');
+  var mapW   = mapCol.offsetWidth  || 220;
+  var mapH   = mapCol.offsetHeight || 160;
+  var zoom   = 14;
+  var n      = Math.pow(2, zoom);
+  var xtile  = Math.floor((lon + 180) / 360 * n);
+  var ytile  = Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * n);
+  document.getElementById('osm-map').src =
+    'https://tile.openstreetmap.org/' + zoom + '/' + xtile + '/' + ytile + '.png';
+
+  renderChart7(data.dias);
+  renderDiasList(data.dias);
+  renderHeatmap(data.anual, 'perdido');
+  renderPerdidosBar(data.anual, cfg);
+}
+
+function renderTarjetas(u) {
+  document.getElementById('c-temp').textContent   = u.temperatura;
+  document.getElementById('c-st').textContent     = 'Sensacion ' + u.sensacion + ' C';
+  document.getElementById('c-prec').textContent   = u.precipitacion;
+  document.getElementById('c-viento').textContent = u.viento;
+  document.getElementById('c-hum').textContent    = u.humedad;
+  document.getElementById('c-desc').textContent   = u.descripcion;
+}
+
+function renderChart7(dias) {
+  if (!dias || !dias.length) return;
+  if (chart7Instance) chart7Instance.destroy();
+  var labels = [], temps = [], vientos = [], lluvias = [];
+  for (var i = 0; i < dias.length; i++) {
+    labels.push(formatFechaCorta(dias[i].fecha));
+    temps.push(dias[i].tempProm);
+    vientos.push(dias[i].vientoMax);
+    lluvias.push(dias[i].lluviaTotal);
+  }
+  chart7Instance = new Chart(document.getElementById('chart7').getContext('2d'), {
+    data: {
+      labels: labels,
+      datasets: [
+        { type:'line', label:'Temperatura (C)', data:temps, borderColor:'#d97706', backgroundColor:'transparent', borderWidth:2.5, pointRadius:4, pointBackgroundColor:'#d97706', tension:0.3, yAxisID:'yTemp' },
+        { type:'bar',  label:'Viento max. (km/h)', data:vientos, backgroundColor:'#93c5fd', borderColor:'#2563eb', borderWidth:1, borderRadius:4, yAxisID:'yBar' },
+        { type:'bar',  label:'Lluvia (mm)', data:lluvias, backgroundColor:'#fca5a5', borderColor:'#dc2626', borderWidth:1, borderRadius:4, yAxisID:'yBar' }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{ legend:{ display:false }, tooltip:{ backgroundColor:'#fff', borderColor:'#e2e8f0', borderWidth:1, titleColor:'#1e293b', bodyColor:'#64748b', padding:10 } },
+      scales:{
+        x:     { grid:{ color:'#f1f5f9' }, ticks:{ color:'#64748b', font:{ size:11 } } },
+        yTemp: { position:'left',  grid:{ color:'#f1f5f9' }, ticks:{ color:'#d97706', font:{ size:10 } }, title:{ display:true, text:'C', color:'#d97706', font:{ size:10 } } },
+        yBar:  { position:'right', grid:{ drawOnChartArea:false }, ticks:{ color:'#64748b', font:{ size:10 } }, title:{ display:true, text:'km/h - mm', color:'#64748b', font:{ size:10 } } }
+      }
+    }
+  });
+}
+
+function renderDiasList(dias) {
+  var el = document.getElementById('dias-list');
+  if (!dias || !dias.length) { el.innerHTML = '<div style="color:var(--muted);font-size:0.8rem;padding:6px">Sin datos suficientes</div>'; return; }
+  var html = '';
+  for (var i = 0; i < dias.length; i++) {
+    var d = dias[i];
+    html += '<div class="dia-row' + (d.diaPerdido ? ' dia-perdido' : '') + '">';
+    html += '<div class="dia-fecha">' + formatFechaCorta(d.fecha) + '</div>';
+    html += '<div class="dia-badge ' + (d.diaPerdido ? 'dia-badge-lost' : 'dia-badge-ok') + '">' + (d.diaPerdido ? 'Dia perdido' : 'Normal') + '</div>';
+    html += '<div class="dia-stats">';
+    html += '<div class="dia-stat"><div class="dia-stat-val" style="color:var(--temp)">' + d.tempProm + ' C</div><div class="dia-stat-lbl">temp prom</div></div>';
+    html += '<div class="dia-stat"><div class="dia-stat-val" style="color:var(--wind)">' + d.vientoMax + ' km/h</div><div class="dia-stat-lbl">viento max</div></div>';
+    html += '<div class="dia-stat"><div class="dia-stat-val" style="color:var(--rain)">' + d.lluviaTotal + ' mm</div><div class="dia-stat-lbl">lluvia</div></div>';
+    html += '</div></div>';
+  }
+  el.innerHTML = html;
+}
+
+function cambiarModo(mode) {
+  var btns = ['perdido','lluvia','viento','temp'];
+  for (var i = 0; i < btns.length; i++) {
+    document.getElementById('btn-' + btns[i]).className =
+      btns[i] === mode ? 'btn-sel btn-sel-active' : 'btn-sel';
+  }
+  renderHeatmap(globalAnual, mode);
+}
+
+function renderHeatmap(anual, mode) {
+  var wrap = document.getElementById('heatmap');
+  wrap.innerHTML = '';
+  var porFecha = {};
+  for (var i = 0; i < anual.length; i++) porFecha[anual[i].fecha] = anual[i];
+
+  var hoy = new Date(), anioActual = hoy.getFullYear();
+  var inicio = new Date(anioActual, 0, 1);
+  var offset = (inicio.getDay() === 0) ? 6 : inicio.getDay() - 1;
+  var primerLunes = new Date(inicio);
+  primerLunes.setDate(inicio.getDate() - offset);
+
+  var meses   = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  var diasSem = ['L','M','X','J','V','S','D'];
+  var semanasPorMes = {};
+  var f = new Date(primerLunes);
+  while (f.getFullYear() <= anioActual) {
+    var mes = f.getMonth();
+    if (!semanasPorMes[mes]) semanasPorMes[mes] = [];
+    var sem = [];
+    for (var d = 0; d < 7; d++) { sem.push(new Date(f)); f.setDate(f.getDate() + 1); }
+    semanasPorMes[mes].push(sem);
+    if (f.getFullYear() > anioActual) break;
+  }
+
+  var lCol = document.createElement('div');
+  lCol.style.cssText = 'display:flex;flex-direction:column;gap:3px;margin-top:14px;margin-right:4px;';
+  for (var di = 0; di < diasSem.length; di++) {
+    var lbl = document.createElement('div');
+    lbl.style.cssText = 'font-size:0.52rem;color:var(--muted);height:12px;line-height:12px;';
+    lbl.textContent = diasSem[di];
+    lCol.appendChild(lbl);
+  }
+  wrap.appendChild(lCol);
+
+  for (var m = 0; m < 12; m++) {
+    var semanas = semanasPorMes[m] || [];
+    var mDiv = document.createElement('div'); mDiv.className = 'hm-month';
+    var mLbl = document.createElement('div'); mLbl.className = 'hm-month-label'; mLbl.textContent = meses[m];
+    mDiv.appendChild(mLbl);
+    var wDiv = document.createElement('div'); wDiv.className = 'hm-weeks';
+    for (var si = 0; si < semanas.length; si++) {
+      var wk = document.createElement('div'); wk.className = 'hm-week';
+      for (var di2 = 0; di2 < semanas[si].length; di2++) {
+        var dia = semanas[si][di2];
+        var cell = document.createElement('div'); cell.className = 'hm-day';
+        var key = pad2(dia.getFullYear()) + '-' + pad2(dia.getMonth()+1) + '-' + pad2(dia.getDate());
+        var dato = porFecha[key], mismo = dia.getFullYear() === anioActual, futuro = dia > hoy;
+        cell.className += ' ' + (!mismo || futuro || !dato ? 'hm-nodata' : getHeatClass(dato, mode));
+        (function(k, dt, ms, ft) {
+          cell.onmousemove = function(e) {
+            var tip = document.getElementById('hm-tooltip');
+            tip.style.opacity = '1'; tip.style.left = (e.clientX+12)+'px'; tip.style.top = (e.clientY-8)+'px';
+            tip.innerHTML = dt && ms && !ft
+              ? '<strong>' + formatFechaLarga(k) + '</strong><br>Temp ' + dt.tempProm + 'C  Viento ' + dt.vientoMax + ' km/h  Lluvia ' + dt.lluviaTotal + ' mm<br>' + (dt.diaPerdido ? '<span style="color:#dc2626">Dia perdido</span>' : '<span style="color:#16a34a">Normal</span>')
+              : '<span style="color:var(--muted)">' + formatFechaLarga(k) + ' - sin datos</span>';
+          };
+          cell.onmouseleave = function() { document.getElementById('hm-tooltip').style.opacity = '0'; };
+        })(key, dato, mismo, futuro);
+        wk.appendChild(cell);
+      }
+      wDiv.appendChild(wk);
+    }
+    mDiv.appendChild(wDiv); wrap.appendChild(mDiv);
+  }
+}
+
+function getHeatClass(d, mode) {
+  if (mode === 'perdido') return d.diaPerdido ? 'hm-perdido' : 'hm-ok';
+  if (mode === 'lluvia')  return d.lluviaTotal === 0 ? 'hm-ok' : d.lluviaTotal < 5 ? 'hm-r1' : d.lluviaTotal < 20 ? 'hm-r2' : 'hm-r3';
+  if (mode === 'viento')  return d.vientoMax < 20 ? 'hm-ok' : d.vientoMax < 40 ? 'hm-w1' : d.vientoMax < 60 ? 'hm-w2' : 'hm-w3';
+  if (mode === 'temp')    return d.tempProm < 10 ? 'hm-w2' : d.tempProm < 20 ? 'hm-ok' : d.tempProm < 28 ? 'hm-r1' : 'hm-perdido';
+  return 'hm-ok';
+}
+
+function renderPerdidosBar(anual, cfg) {
+  var perdidos = 0;
+  for (var i = 0; i < anual.length; i++) if (anual[i].diaPerdido) perdidos++;
+  document.getElementById('pd-count').textContent = perdidos;
+  document.getElementById('pd-config').innerHTML =
+    'De ' + anual.length + ' dias registrados<br>' +
+    '<span style="font-size:0.68rem">Umbral: lluvia &gt;' + cfg.lluviaDiaPerdido + 'mm  viento &gt;' + cfg.vientoDiaPerdido + ' km/h (' + cfg.condicionDP + ')</span>';
+}
+
+function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+function formatFechaCorta(iso) { var p = iso.split('-'); return p[2] + '/' + p[1]; }
+function formatFechaLarga(iso) {
+  var p = iso.split('-');
+  var m = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  return parseInt(p[2]) + ' ' + m[parseInt(p[1])-1] + ' ' + p[0];
+}
+</script>
+</body>
+</html>
