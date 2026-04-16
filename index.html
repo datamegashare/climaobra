@@ -274,9 +274,9 @@
   .btn-periodo:disabled { opacity: 0.35; cursor: not-allowed; }
 
   /* UPTIME 60 DIAS */
-  .uptime-wrap { display: flex; gap: 3px; align-items: flex-end; overflow-x: auto; padding: 4px 0 6px; }
+  .uptime-wrap { display: flex; gap: 2px; align-items: flex-end; padding: 4px 0 6px; width: 100%; }
   .uptime-bar {
-    flex-shrink: 0; width: 10px; height: 28px; border-radius: 3px;
+    flex: 1; min-width: 4px; height: 28px; border-radius: 3px;
     cursor: pointer; transition: opacity 0.15s, transform 0.1s;
   }
   .uptime-bar:hover { opacity: 0.75; transform: scaleY(1.15); transform-origin: bottom; }
