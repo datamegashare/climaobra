@@ -715,18 +715,11 @@ function renderUltimoDia(ultimoDia) {
 
   if (chartUltimoDia) chartUltimoDia.destroy();
 
-  // Deduplicar horas (tomar el primer registro de cada hora)
-  var horasVistas = {};
-  var labels = [], temps = [], vientos = [], lluvias = [];
-  for (var i = 0; i < ultimoDia.horas.length; i++) {
-    var h = ultimoDia.horas[i];
-    if (horasVistas[h]) continue;
-    horasVistas[h] = true;
-    labels.push(h);
-    temps.push(ultimoDia.temps[i]);
-    vientos.push(ultimoDia.vientos[i]);
-    lluvias.push(ultimoDia.lluvias[i]);
-  }
+  // Horas ya deduplicadas y ordenadas desde el servidor
+  var labels   = ultimoDia.horas;
+  var temps    = ultimoDia.temps;
+  var vientos  = ultimoDia.vientos;
+  var lluvias  = ultimoDia.lluvias;
 
   var ctx = document.getElementById('chart-ultimo-dia').getContext('2d');
   chartUltimoDia = new Chart(ctx, {
