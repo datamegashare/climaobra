@@ -241,7 +241,25 @@
     color: var(--accent);
     margin-bottom: 10px;
   }
-  #chart-ultimo-dia-wrap { flex: 1; min-height: 220px; }
+  #ultimo-dia-tabla { flex: 1; overflow-y: auto; }
+  .ud-row {
+    display: grid;
+    grid-template-columns: 44px 1fr 1fr 1fr;
+    gap: 6px;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.72rem;
+  }
+  .ud-row:last-child { border-bottom: none; }
+  .ud-hora { color: var(--muted); font-weight: 600; font-size: 0.7rem; }
+  .ud-cell { display: flex; flex-direction: column; gap: 2px; }
+  .ud-val  { font-weight: 600; font-size: 0.75rem; }
+  .ud-bar-wrap { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .ud-bar { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+  .ud-bar-temp  { background: #d97706; }
+  .ud-bar-wind  { background: #2563eb; }
+  .ud-bar-rain  { background: #dc2626; }
 
   @media (max-width: 900px) {
     #cards-row { grid-template-columns: repeat(3, 1fr); }
@@ -374,9 +392,7 @@
         <div id="ultimo-dia-box">
           <div class="ultimo-dia-title">Evolucion del dia</div>
           <div class="ultimo-dia-fecha" id="ultimo-dia-fecha">-</div>
-          <div id="chart-ultimo-dia-wrap">
-            <canvas id="chart-ultimo-dia"></canvas>
-          </div>
+          <div id="ultimo-dia-tabla"></div>
         </div>
       </div>
     </div>
@@ -411,7 +427,6 @@ var API_URL    = 'https://script.google.com/macros/s/AKfycbzH5slzkOQ8fvhCt9JXIoM
 // ─────────────────────────────────────────────────────────────
 
 var chart7Instance       = null;
-var chartUltimoDia       = null;
 var globalAnual          = [];
 var globalCfg            = {};
 var userEmail            = '';
@@ -710,63 +725,56 @@ function renderDiasList(dias) {
 function renderUltimoDia(ultimoDia) {
   if (!ultimoDia || !ultimoDia.horas || !ultimoDia.horas.length) return;
 
-  var fechaLabel = formatFechaLarga(ultimoDia.fecha);
-  document.getElementById('ultimo-dia-fecha').textContent = fechaLabel;
+  document.getElementById('ultimo-dia-fecha').textContent = formatFechaLarga(ultimoDia.fecha);
 
-  if (chartUltimoDia) chartUltimoDia.destroy();
+  var horas   = ultimoDia.horas;
+  var temps   = ultimoDia.temps;
+  var vientos = ultimoDia.vientos;
+  var lluvias = ultimoDia.lluvias;
 
-  // Horas ya deduplicadas y ordenadas desde el servidor
-  var labels   = ultimoDia.horas;
-  var temps    = ultimoDia.temps;
-  var vientos  = ultimoDia.vientos;
-  var lluvias  = ultimoDia.lluvias;
+  // Maximos del dia para escalar las barras
+  var maxTemp   = Math.max.apply(null, temps)   || 1;
+  var maxViento = Math.max.apply(null, vientos) || 1;
+  var maxLluvia = Math.max.apply(null, lluvias) || 1;
 
-  var ctx = document.getElementById('chart-ultimo-dia').getContext('2d');
-  chartUltimoDia = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [
-        { label: 'Temperatura (C)', data: temps,
-          backgroundColor: '#fed7aa', borderColor: '#d97706',
-          borderWidth: 1, borderRadius: 3, xAxisID: 'xTemp' },
-        { label: 'Viento (km/h)', data: vientos,
-          backgroundColor: '#93c5fd', borderColor: '#2563eb',
-          borderWidth: 1, borderRadius: 3, xAxisID: 'xBar' },
-        { label: 'Lluvia (mm)', data: lluvias,
-          backgroundColor: '#fca5a5', borderColor: '#dc2626',
-          borderWidth: 1, borderRadius: 3, xAxisID: 'xBar' }
-      ]
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { display: true, position: 'bottom',
-          labels: { font: { size: 10 }, color: '#64748b', boxWidth: 10, padding: 8 } },
-        tooltip: { backgroundColor: '#fff', borderColor: '#e2e8f0', borderWidth: 1,
-                   titleColor: '#1e293b', bodyColor: '#64748b', padding: 8 }
-      },
-      scales: {
-        y: { grid: { color: '#f1f5f9' },
-             ticks: { color: '#1e293b', font: { size: 10 }, mirror: false } },
-        xTemp: {
-          position: 'top',
-          grid: { color: '#f1f5f9' },
-          ticks: { color: '#d97706', font: { size: 9 } },
-          title: { display: true, text: 'C', color: '#d97706', font: { size: 9 } }
-        },
-        xBar: {
-          position: 'bottom',
-          grid: { drawOnChartArea: false },
-          ticks: { color: '#64748b', font: { size: 9 } },
-          title: { display: true, text: 'km/h - mm', color: '#64748b', font: { size: 9 } }
-        }
-      }
-    }
-  });
+  // Encabezado
+  var html = '<div class="ud-row" style="font-size:0.62rem;color:var(--muted);font-weight:600;">';
+  html += '<div class="ud-hora"></div>';
+  html += '<div style="color:var(--temp)">TEMP</div>';
+  html += '<div style="color:var(--wind)">VIENTO</div>';
+  html += '<div style="color:var(--rain)">LLUVIA</div>';
+  html += '</div>';
+
+  for (var i = 0; i < horas.length; i++) {
+    var pctTemp   = Math.round(temps[i]   / maxTemp   * 100);
+    var pctViento = Math.round(vientos[i] / maxViento * 100);
+    var pctLluvia = lluvias[i] > 0 ? Math.max(Math.round(lluvias[i] / maxLluvia * 100), 8) : 0;
+
+    html += '<div class="ud-row">';
+    html += '<div class="ud-hora">' + horas[i] + '</div>';
+
+    // Temperatura
+    html += '<div class="ud-cell">';
+    html += '<div class="ud-val" style="color:var(--temp)">' + temps[i] + ' C</div>';
+    html += '<div class="ud-bar-wrap"><div class="ud-bar ud-bar-temp" style="width:' + pctTemp + '%"></div></div>';
+    html += '</div>';
+
+    // Viento
+    html += '<div class="ud-cell">';
+    html += '<div class="ud-val" style="color:var(--wind)">' + vientos[i] + ' km/h</div>';
+    html += '<div class="ud-bar-wrap"><div class="ud-bar ud-bar-wind" style="width:' + pctViento + '%"></div></div>';
+    html += '</div>';
+
+    // Lluvia
+    html += '<div class="ud-cell">';
+    html += '<div class="ud-val" style="color:' + (lluvias[i] > 0 ? 'var(--rain)' : 'var(--muted)') + '">' + lluvias[i] + ' mm</div>';
+    html += '<div class="ud-bar-wrap"><div class="ud-bar ud-bar-rain" style="width:' + pctLluvia + '%"></div></div>';
+    html += '</div>';
+
+    html += '</div>';
+  }
+
+  document.getElementById('ultimo-dia-tabla').innerHTML = html;
 }
 
 function cambiarModo(mode) {
