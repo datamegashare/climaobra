@@ -212,7 +212,48 @@
   .update-status.manual { color: #2563eb; }
   .next-update { font-size: 0.58rem; color: var(--muted); text-align: right; white-space: nowrap; }
 
-  @media (max-width: 900px) { #cards-row { grid-template-columns: repeat(3, 1fr); } :root { --map-w: 180px; } }
+  /* LAYOUT DIVIDIDO: tabla + grafico ultimo dia */
+  #dias-y-grafico {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 10px;
+  }
+  #ultimo-dia-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+  }
+  .ultimo-dia-title {
+    font-size: 0.68rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .ultimo-dia-fecha {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  #chart-ultimo-dia-wrap { flex: 1; min-height: 180px; }
+
+  @media (max-width: 900px) {
+    #cards-row { grid-template-columns: repeat(3, 1fr); }
+    :root { --map-w: 180px; }
+    #dias-y-grafico { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    #top-block { flex-direction: column; }
+    #map-col { width: 100%; height: 140px; }
+    #cards-row { grid-template-columns: repeat(2, 1fr); }
+    #dias-y-grafico { grid-template-columns: 1fr; }
+  }
   @media (max-width: 600px) { #top-block { flex-direction: column; } #map-col { width: 100%; height: 140px; } #cards-row { grid-template-columns: repeat(2, 1fr); } }
 </style>
 </head>
@@ -328,7 +369,16 @@
           <div class="legend-item"><div class="legend-dot" style="background:var(--rain)"></div> Lluvia total (mm)</div>
         </div>
       </div>
-      <div style="margin-top:10px;"><div class="dias-list" id="dias-list"></div></div>
+      <div id="dias-y-grafico">
+        <div class="dias-list" id="dias-list"></div>
+        <div id="ultimo-dia-box">
+          <div class="ultimo-dia-title">Evolucion del dia</div>
+          <div class="ultimo-dia-fecha" id="ultimo-dia-fecha">-</div>
+          <div id="chart-ultimo-dia-wrap">
+            <canvas id="chart-ultimo-dia"></canvas>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="section">
       <div class="section-title">VISTA ANUAL <span>selecciona que visualizar</span></div>
@@ -360,10 +410,11 @@ var CLIENT_ID  = '985022387906-5h3qtmq6jifdl5jdv77o4amf9nb3mcdn.apps.googleuserc
 var API_URL    = 'https://script.google.com/macros/s/AKfycbzH5slzkOQ8fvhCt9JXIoMFNxrBZghZv34fowPI2Yk948eTxhZmHFX37InwpnxmkVBU/exec';
 // ─────────────────────────────────────────────────────────────
 
-var chart7Instance  = null;
-var globalAnual     = [];
-var globalCfg       = {};
-var userEmail       = '';
+var chart7Instance       = null;
+var chartUltimoDia       = null;
+var globalAnual          = [];
+var globalCfg            = {};
+var userEmail            = '';
 var ultimaActualizacion = null;
 var tipoActualizacion   = '';
 var timerAuto           = null;
@@ -496,6 +547,7 @@ function actualizarVistaDatos(data) {
   globalAnual = data.anual;
   renderChart7(data.dias);
   renderDiasList(data.dias);
+  renderUltimoDia(data.ultimoDia);
   renderHeatmap(data.anual, 'perdido');
   renderPerdidosBar(data.anual, data.config || globalCfg);
   var modoActivo = document.querySelector('.btn-sel-active');
@@ -590,6 +642,7 @@ function iniciarDashboard(data) {
 
   renderChart7(data.dias);
   renderDiasList(data.dias);
+  renderUltimoDia(data.ultimoDia);
   renderHeatmap(data.anual, 'perdido');
   renderPerdidosBar(data.anual, cfg);
 }
@@ -639,7 +692,8 @@ function renderDiasList(dias) {
   var el = document.getElementById('dias-list');
   if (!dias || !dias.length) { el.innerHTML = '<div style="color:var(--muted);font-size:0.8rem;padding:6px">Sin datos suficientes</div>'; return; }
   var html = '';
-  for (var i = 0; i < dias.length; i++) {
+  // Orden inverso: mas reciente primero
+  for (var i = dias.length - 1; i >= 0; i--) {
     var d = dias[i];
     html += '<div class="dia-row' + (d.diaPerdido ? ' dia-perdido' : '') + '">';
     html += '<div class="dia-fecha">' + formatFechaCorta(d.fecha) + '</div>';
@@ -651,6 +705,66 @@ function renderDiasList(dias) {
     html += '</div></div>';
   }
   el.innerHTML = html;
+}
+
+function renderUltimoDia(ultimoDia) {
+  if (!ultimoDia || !ultimoDia.horas || !ultimoDia.horas.length) return;
+
+  var fechaLabel = formatFechaLarga(ultimoDia.fecha);
+  document.getElementById('ultimo-dia-fecha').textContent = fechaLabel;
+
+  if (chartUltimoDia) chartUltimoDia.destroy();
+
+  // Deduplicar horas (tomar el primer registro de cada hora)
+  var horasVistas = {};
+  var labels = [], temps = [], vientos = [], lluvias = [];
+  for (var i = 0; i < ultimoDia.horas.length; i++) {
+    var h = ultimoDia.horas[i];
+    if (horasVistas[h]) continue;
+    horasVistas[h] = true;
+    labels.push(h);
+    temps.push(ultimoDia.temps[i]);
+    vientos.push(ultimoDia.vientos[i]);
+    lluvias.push(ultimoDia.lluvias[i]);
+  }
+
+  var ctx = document.getElementById('chart-ultimo-dia').getContext('2d');
+  chartUltimoDia = new Chart(ctx, {
+    data: {
+      labels: labels,
+      datasets: [
+        { type: 'line', label: 'Temperatura (C)', data: temps,
+          borderColor: '#d97706', backgroundColor: 'transparent',
+          borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#d97706',
+          tension: 0.3, yAxisID: 'yTemp' },
+        { type: 'bar', label: 'Viento (km/h)', data: vientos,
+          backgroundColor: '#93c5fd', borderColor: '#2563eb',
+          borderWidth: 1, borderRadius: 3, yAxisID: 'yBar' },
+        { type: 'bar', label: 'Lluvia (mm)', data: lluvias,
+          backgroundColor: '#fca5a5', borderColor: '#dc2626',
+          borderWidth: 1, borderRadius: 3, yAxisID: 'yBar' }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor: '#fff', borderColor: '#e2e8f0', borderWidth: 1,
+                   titleColor: '#1e293b', bodyColor: '#64748b', padding: 8 }
+      },
+      scales: {
+        x:     { grid: { color: '#f1f5f9' }, ticks: { color: '#64748b', font: { size: 10 } } },
+        yTemp: { position: 'left', grid: { color: '#f1f5f9' },
+                 ticks: { color: '#d97706', font: { size: 9 } },
+                 title: { display: true, text: 'C', color: '#d97706', font: { size: 9 } } },
+        yBar:  { position: 'right', grid: { drawOnChartArea: false },
+                 ticks: { color: '#64748b', font: { size: 9 } },
+                 title: { display: true, text: 'km/h - mm', color: '#64748b', font: { size: 9 } } }
+      }
+    }
+  });
 }
 
 function cambiarModo(mode) {
