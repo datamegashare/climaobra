@@ -212,8 +212,57 @@
   .update-status.manual { color: #2563eb; }
   .next-update { font-size: 0.58rem; color: var(--muted); text-align: right; white-space: nowrap; }
 
+  /* LAYOUT DIVIDIDO: tabla + grafico ultimo dia */
+  #dias-y-grafico {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 10px;
+  }
+  #ultimo-dia-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+  }
+  .ultimo-dia-title {
+    font-size: 0.68rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .ultimo-dia-fecha {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  #ultimo-dia-tabla { flex: 1; overflow-y: auto; }
+  .ud-row {
+    display: grid;
+    grid-template-columns: 44px 1fr 1fr 1fr;
+    gap: 6px;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.72rem;
+  }
+  .ud-row:last-child { border-bottom: none; }
+  .ud-hora { color: var(--muted); font-weight: 600; font-size: 0.7rem; }
+  .ud-cell { display: flex; flex-direction: column; gap: 2px; }
+  .ud-val  { font-weight: 600; font-size: 0.75rem; }
+  .ud-bar-wrap { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .ud-bar { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+  .ud-bar-temp  { background: #d97706; }
+  .ud-bar-wind  { background: #2563eb; }
+  .ud-bar-rain  { background: #dc2626; }
+
   /* SELECTOR DE PERIODO */
-  .periodo-controls { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
+  .periodo-controls { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
   .btn-periodo {
     padding: 4px 14px; border-radius: 20px;
     border: 1px solid var(--border); background: var(--surface);
@@ -225,38 +274,30 @@
   .btn-periodo:disabled { opacity: 0.35; cursor: not-allowed; }
 
   /* UPTIME 60 DIAS */
-  .uptime-wrap {
-    display: flex; gap: 3px; align-items: flex-end;
-    overflow-x: auto; padding: 4px 0 8px;
-  }
+  .uptime-wrap { display: flex; gap: 3px; align-items: flex-end; overflow-x: auto; padding: 4px 0 6px; }
   .uptime-bar {
-    flex-shrink: 0; width: 10px; height: 28px;
-    border-radius: 3px; cursor: pointer;
-    transition: opacity 0.15s, transform 0.1s;
-    position: relative;
+    flex-shrink: 0; width: 10px; height: 28px; border-radius: 3px;
+    cursor: pointer; transition: opacity 0.15s, transform 0.1s;
   }
-  .uptime-bar:hover { opacity: 0.8; transform: scaleY(1.15); transform-origin: bottom; }
+  .uptime-bar:hover { opacity: 0.75; transform: scaleY(1.15); transform-origin: bottom; }
   .uptime-normal   { background: #16a34a; }
   .uptime-perdido  { background: #dc2626; }
   .uptime-sinDatos { background: #e2e8f0; }
-  .uptime-labels {
-    display: flex; justify-content: space-between;
-    font-size: 0.62rem; color: var(--muted); margin-top: 4px;
-  }
-  .uptime-leyenda {
-    display: flex; gap: 14px; margin-top: 8px; flex-wrap: wrap;
-  }
+  .uptime-labels { display: flex; justify-content: space-between; font-size: 0.62rem; color: var(--muted); margin-top: 4px; }
+  .uptime-leyenda { display: flex; gap: 14px; margin-top: 8px; flex-wrap: wrap; }
   .uptime-ley-item { display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: var(--muted); }
   .uptime-ley-dot  { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
 
   @media (max-width: 900px) {
     #cards-row { grid-template-columns: repeat(3, 1fr); }
     :root { --map-w: 180px; }
+    #dias-y-grafico { grid-template-columns: 1fr; }
   }
   @media (max-width: 600px) {
     #top-block { flex-direction: column; }
     #map-col { width: 100%; height: 140px; }
     #cards-row { grid-template-columns: repeat(2, 1fr); }
+    #dias-y-grafico { grid-template-columns: 1fr; }
   }
   @media (max-width: 600px) { #top-block { flex-direction: column; } #map-col { width: 100%; height: 140px; } #cards-row { grid-template-columns: repeat(2, 1fr); } }
 </style>
@@ -372,7 +413,7 @@
           <button class="btn-periodo"        id="btn-p21" onclick="cambiarPeriodo(21)">21 dias</button>
           <button class="btn-periodo"        id="btn-p28" onclick="cambiarPeriodo(28)">28 dias</button>
         </div>
-        <span style="font-size:0.68rem;color:var(--muted);" id="periodo-label">temperatura - viento - lluvia</span>
+        <span style="font-size:0.68rem;color:var(--muted);">temperatura - viento - lluvia</span>
       </div>
       <div class="chart-box">
         <div class="chart-wrap"><canvas id="chart7"></canvas></div>
@@ -382,22 +423,28 @@
           <div class="legend-item"><div class="legend-dot" style="background:var(--rain)"></div> Lluvia total (mm)</div>
         </div>
       </div>
-      <div style="margin-top:10px;"><div class="dias-list" id="dias-list"></div></div>
+      <div id="dias-y-grafico">
+        <div class="dias-list" id="dias-list"></div>
+        <div id="ultimo-dia-box">
+          <div class="ultimo-dia-title">Evolucion del dia</div>
+          <div class="ultimo-dia-fecha" id="ultimo-dia-fecha">-</div>
+          <div id="ultimo-dia-tabla"></div>
+        </div>
+      </div>
     </div>
-
     <div class="section">
       <div class="section-title">DIAS PERDIDOS <span>ultimos 60 dias</span></div>
       <div class="chart-box" style="padding:14px 16px;">
         <div class="uptime-wrap" id="uptime-wrap"></div>
         <div class="uptime-labels">
-          <span id="uptime-label-inicio">60 dias atras</span>
+          <span>60 dias atras</span>
           <span id="uptime-label-perdidos"></span>
           <span>Hoy</span>
         </div>
         <div class="uptime-leyenda">
-          <div class="uptime-ley-item"><div class="uptime-ley-dot" style="background:#16a34a"></div> Normal</div>
-          <div class="uptime-ley-item"><div class="uptime-ley-dot" style="background:#dc2626"></div> Dia perdido</div>
-          <div class="uptime-ley-item"><div class="uptime-ley-dot" style="background:#e2e8f0"></div> Sin registros</div>
+          <div class="uptime-ley-item"><div class="uptime-ley-dot uptime-normal"></div> Normal</div>
+          <div class="uptime-ley-item"><div class="uptime-ley-dot uptime-perdido"></div> Dia perdido</div>
+          <div class="uptime-ley-item"><div class="uptime-ley-dot uptime-sinDatos"></div> Sin registros</div>
         </div>
       </div>
     </div>
@@ -432,13 +479,13 @@ var CLIENT_ID  = '985022387906-5h3qtmq6jifdl5jdv77o4amf9nb3mcdn.apps.googleuserc
 var API_URL    = 'https://script.google.com/macros/s/AKfycbzH5slzkOQ8fvhCt9JXIoMFNxrBZghZv34fowPI2Yk948eTxhZmHFX37InwpnxmkVBU/exec';
 // ─────────────────────────────────────────────────────────────
 
-var chart7Instance  = null;
-var globalAnual     = [];
-var globalDias28    = [];
-var globalUptime60  = [];
-var globalCfg       = {};
-var userEmail       = '';
-var periodoActual   = 7;
+var chart7Instance       = null;
+var globalAnual          = [];
+var globalDias28         = [];
+var globalUptime60       = [];
+var globalCfg            = {};
+var userEmail            = '';
+var periodoActual        = 7;
 var ultimaActualizacion = null;
 var tipoActualizacion   = '';
 var timerAuto           = null;
@@ -575,7 +622,8 @@ function actualizarVistaDatos(data) {
   var diasFiltrados = filtrarDias(globalDias28, periodoActual);
   renderChart7(diasFiltrados);
   renderDiasList(diasFiltrados);
-  renderUptime60(globalUptime60, data.config || globalCfg);
+  renderUltimoDia(data.ultimoDia);
+  renderUptime60(globalUptime60);
   var modoActivo = document.querySelector('.btn-sel-active');
   if (modoActivo && modoActivo.id) {
     renderHeatmap(data.anual, modoActivo.id.replace('btn-', ''));
@@ -670,18 +718,18 @@ function iniciarDashboard(data) {
   globalDias28   = data.dias   || [];
   globalUptime60 = data.uptime60 || [];
 
-  // Habilitar botones de periodo segun datos disponibles
-  var disponibles = globalDias28.length;
-  document.getElementById('btn-p14').disabled = disponibles < 8;
-  document.getElementById('btn-p21').disabled = disponibles < 15;
-  document.getElementById('btn-p28').disabled = disponibles < 22;
+  // Habilitar botones segun datos disponibles
+  document.getElementById('btn-p14').disabled = globalDias28.length < 8;
+  document.getElementById('btn-p21').disabled = globalDias28.length < 15;
+  document.getElementById('btn-p28').disabled = globalDias28.length < 22;
 
   periodoActual = 7;
   actualizarBotonesPeriodo(7);
   var diasFiltrados = filtrarDias(globalDias28, 7);
   renderChart7(diasFiltrados);
   renderDiasList(diasFiltrados);
-  renderUptime60(globalUptime60, cfg);
+  renderUltimoDia(data.ultimoDia);
+  renderUptime60(globalUptime60);
   renderHeatmap(data.anual, 'perdido');
   renderPerdidosBar(data.anual, cfg);
 }
@@ -731,7 +779,8 @@ function renderDiasList(dias) {
   var el = document.getElementById('dias-list');
   if (!dias || !dias.length) { el.innerHTML = '<div style="color:var(--muted);font-size:0.8rem;padding:6px">Sin datos suficientes</div>'; return; }
   var html = '';
-  for (var i = 0; i < dias.length; i++) {
+  // Orden inverso: mas reciente primero
+  for (var i = dias.length - 1; i >= 0; i--) {
     var d = dias[i];
     html += '<div class="dia-row' + (d.diaPerdido ? ' dia-perdido' : '') + '">';
     html += '<div class="dia-fecha">' + formatFechaCorta(d.fecha) + '</div>';
@@ -745,34 +794,86 @@ function renderDiasList(dias) {
   el.innerHTML = html;
 }
 
+function renderUltimoDia(ultimoDia) {
+  if (!ultimoDia || !ultimoDia.horas || !ultimoDia.horas.length) return;
+
+  document.getElementById('ultimo-dia-fecha').textContent = formatFechaLarga(ultimoDia.fecha);
+
+  var horas   = ultimoDia.horas;
+  var temps   = ultimoDia.temps;
+  var vientos = ultimoDia.vientos;
+  var lluvias = ultimoDia.lluvias;
+
+  // Maximos del dia para escalar las barras
+  var maxTemp   = Math.max.apply(null, temps)   || 1;
+  var maxViento = Math.max.apply(null, vientos) || 1;
+  var maxLluvia = Math.max.apply(null, lluvias) || 1;
+
+  // Encabezado
+  var html = '<div class="ud-row" style="font-size:0.62rem;color:var(--muted);font-weight:600;">';
+  html += '<div class="ud-hora"></div>';
+  html += '<div style="color:var(--temp)">TEMP</div>';
+  html += '<div style="color:var(--wind)">VIENTO</div>';
+  html += '<div style="color:var(--rain)">LLUVIA</div>';
+  html += '</div>';
+
+  for (var i = 0; i < horas.length; i++) {
+    var pctTemp   = Math.round(temps[i]   / maxTemp   * 100);
+    var pctViento = Math.round(vientos[i] / maxViento * 100);
+    var pctLluvia = lluvias[i] > 0 ? Math.max(Math.round(lluvias[i] / maxLluvia * 100), 8) : 0;
+
+    html += '<div class="ud-row">';
+    html += '<div class="ud-hora">' + horas[i] + '</div>';
+
+    // Temperatura
+    html += '<div class="ud-cell">';
+    html += '<div class="ud-val" style="color:var(--temp)">' + temps[i] + ' C</div>';
+    html += '<div class="ud-bar-wrap"><div class="ud-bar ud-bar-temp" style="width:' + pctTemp + '%"></div></div>';
+    html += '</div>';
+
+    // Viento
+    html += '<div class="ud-cell">';
+    html += '<div class="ud-val" style="color:var(--wind)">' + vientos[i] + ' km/h</div>';
+    html += '<div class="ud-bar-wrap"><div class="ud-bar ud-bar-wind" style="width:' + pctViento + '%"></div></div>';
+    html += '</div>';
+
+    // Lluvia
+    html += '<div class="ud-cell">';
+    html += '<div class="ud-val" style="color:' + (lluvias[i] > 0 ? 'var(--rain)' : 'var(--muted)') + '">' + lluvias[i] + ' mm</div>';
+    html += '<div class="ud-bar-wrap"><div class="ud-bar ud-bar-rain" style="width:' + pctLluvia + '%"></div></div>';
+    html += '</div>';
+
+    html += '</div>';
+  }
+
+  document.getElementById('ultimo-dia-tabla').innerHTML = html;
+}
+
 // ── SELECTOR DE PERIODO ───────────────────────────────────────
 function filtrarDias(dias, n) {
   return dias.slice(-n);
 }
 
 function actualizarBotonesPeriodo(n) {
-  var btns = [7, 14, 21, 28];
-  for (var i = 0; i < btns.length; i++) {
-    var btn = document.getElementById('btn-p' + btns[i]);
-    if (!btn) continue;
-    btn.className = btns[i] === n ? 'btn-periodo active' : 'btn-periodo';
+  var nums = [7, 14, 21, 28];
+  for (var i = 0; i < nums.length; i++) {
+    var btn = document.getElementById('btn-p' + nums[i]);
+    if (btn) btn.className = nums[i] === n ? 'btn-periodo active' : 'btn-periodo';
   }
 }
 
 function cambiarPeriodo(n) {
-  if (document.getElementById('btn-p' + n).disabled) return;
+  var btn = document.getElementById('btn-p' + n);
+  if (!btn || btn.disabled) return;
   periodoActual = n;
   actualizarBotonesPeriodo(n);
   var diasFiltrados = filtrarDias(globalDias28, n);
   renderChart7(diasFiltrados);
   renderDiasList(diasFiltrados);
-  // Scroll tabla al inicio (dia mas reciente)
-  var lista = document.getElementById('dias-list');
-  if (lista) lista.scrollTop = 0;
 }
 
 // ── UPTIME 60 DIAS ────────────────────────────────────────────
-function renderUptime60(uptime60, cfg) {
+function renderUptime60(uptime60) {
   var wrap = document.getElementById('uptime-wrap');
   if (!wrap || !uptime60 || !uptime60.length) return;
 
@@ -806,11 +907,9 @@ function renderUptime60(uptime60, cfg) {
   var labelPerd = document.getElementById('uptime-label-perdidos');
   if (labelPerd) {
     labelPerd.innerHTML =
-      perdidos + ' dia' + (perdidos !== 1 ? 's' : '') + ' perdido' + (perdidos !== 1 ? 's' : '') +
-      ' &nbsp;|&nbsp; ' + pct + '% dias normales';
+      perdidos + ' dia' + (perdidos !== 1 ? 's' : '') + ' perdido' +
+      (perdidos !== 1 ? 's' : '') + ' &nbsp;|&nbsp; ' + pct + '% dias normales';
   }
-
-  // Tooltip nativo en hover via title attribute — funciona sin JS extra
 }
 
 function cambiarModo(mode) {
