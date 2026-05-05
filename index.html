@@ -458,7 +458,7 @@
     <div class="login-logo">&#127959; ClimaObra</div>
     <div class="login-sub">Sistema de registro climatico para obra</div>
     <div id="g-btn-wrap"></div>
-    <div class="login-ver">v11.4</div>
+    <div class="login-ver">v11.5</div>
   </div>
 </div>
 
@@ -507,11 +507,15 @@
         <div class="mob-obra" id="mob-obra-name">-</div>
         <div style="display:flex;gap:6px;align-items:center;">
           <button id="btn-cambiar-obra-mobile" onclick="cambiarObra()" style="display:none;padding:3px 8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:0.62rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">⇄ Obra</button>
+          <button onclick="actualizarDatos('manual')" style="padding:3px 8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:0.62rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">↻ Actual.</button>
           <button id="btn-install-mobile" onclick="instalarPWA()" style="display:none;padding:3px 10px;border-radius:10px;border:1px solid var(--accent);background:none;color:var(--accent);font-size:0.62rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">⬇ Instalar</button>
         </div>
       </div>
       <div class="mob-sub" id="mob-header-sub">-</div>
-      <span class="mob-badge" id="mob-user-badge">-</span>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px;">
+        <span class="mob-badge" id="mob-user-badge">-</span>
+        <span id="mob-version" style="font-size:0.58rem;color:var(--muted);opacity:0.6;"></span>
+      </div>
     </div>
     <div id="top-block">
       <div id="top-left">
@@ -797,8 +801,9 @@
 
 <script>
 // ── CONFIGURACION ─────────────────────────────────────────────
-var CLIENT_ID = '985022387906-5h3qtmq6jifdl5jdv77o4amf9nb3mcdn.apps.googleusercontent.com';
-var API_URL   = 'https://script.google.com/macros/s/AKfycbzH5slzkOQ8fvhCt9JXIoMFNxrBZghZv34fowPI2Yk948eTxhZmHFX37InwpnxmkVBU/exec';
+var CLIENT_ID   = '985022387906-5h3qtmq6jifdl5jdv77o4amf9nb3mcdn.apps.googleusercontent.com';
+var API_URL     = 'https://script.google.com/macros/s/AKfycbzH5slzkOQ8fvhCt9JXIoMFNxrBZghZv34fowPI2Yk948eTxhZmHFX37InwpnxmkVBU/exec';
+var VERSION_UI  = 'v11.5';
 // ─────────────────────────────────────────────────────────────
 
 var chart7Instance      = null;
@@ -1052,6 +1057,7 @@ function iniciarDashboard(data) {
   document.getElementById('mob-obra-name').textContent  = (obra.id ? obra.id + ' - ' : '') + (obra.descripcion || '-');
   document.getElementById('mob-header-sub').textContent = 'Lat ' + obra.latitud + '  Lon ' + obra.longitud;
   document.getElementById('mob-user-badge').textContent = userNombre || userEmail;
+  document.getElementById('mob-version').textContent    = VERSION_UI + ' · GAS ' + (data.version || '');
 
   // Botón cambiar obra (solo si hay más de una)
   var btnCambiar       = document.getElementById('btn-cambiar-obra');
