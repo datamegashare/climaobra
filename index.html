@@ -346,6 +346,23 @@
   .admin-msg.ok  { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
   .admin-msg.err { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
 
+  /* Form en modo edición */
+  .crud-form.editing { border-left: 3px solid var(--accent); }
+  .crud-form.editing .crud-form-title { color: var(--accent); }
+
+  /* Chips de obras */
+  .obras-chips-wrap { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 0 2px; min-height: 28px; }
+  .obra-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-size: 0.72rem; cursor: pointer; transition: all 0.15s; user-select: none; }
+  .obra-chip:hover { border-color: var(--admin); color: var(--admin); }
+  .obra-chip.selected { background: var(--admin); border-color: var(--admin); color: #fff; }
+  .obra-chip-todas { font-style: italic; }
+
+  /* Botón loading */
+  .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* Fila activa en tabla */
+  .crud-table tr.fila-editando td { background: #fef9ec !important; }
+
   /* ── MOBILE BOTTOM TAB BAR ───────────────────────────────── */
   #mobile-tabs {
     display: none; position: fixed; bottom: 0; left: 0; right: 0;
@@ -401,7 +418,7 @@
     <div class="login-logo">&#127959; ClimaObra</div>
     <div class="login-sub">Sistema de registro climatico para obra</div>
     <div id="g-btn-wrap"></div>
-    <div class="login-ver">v11</div>
+    <div class="login-ver">v11.1</div>
   </div>
 </div>
 
@@ -599,32 +616,32 @@
       <!-- TAB OBRAS -->
       <div class="admin-tab-panel active" id="panel-obras">
         <div id="admin-msg-obras"></div>
-        <div class="admin-section-title">Nueva obra</div>
-        <div class="crud-form">
+        <div class="crud-form" id="form-obras">
+          <div class="crud-form-title" id="obra-form-titulo">➕ Nueva obra</div>
           <div class="form-grid">
             <div class="form-group">
-              <label class="form-label">ID (4 digitos)</label>
+              <label class="form-label">ID (4 dígitos) *</label>
               <input class="form-input" id="obra-f-id" type="text" maxlength="4" placeholder="ej: 1234">
             </div>
             <div class="form-group">
-              <label class="form-label">Descripcion</label>
+              <label class="form-label">Descripción *</label>
               <input class="form-input" id="obra-f-desc" type="text" placeholder="ej: Planta Sur">
             </div>
             <div class="form-group">
-              <label class="form-label">Latitud</label>
+              <label class="form-label">Latitud *</label>
               <input class="form-input" id="obra-f-lat" type="text" placeholder="-34.6037">
             </div>
             <div class="form-group">
-              <label class="form-label">Longitud</label>
+              <label class="form-label">Longitud *</label>
               <input class="form-input" id="obra-f-lon" type="text" placeholder="-58.3816">
             </div>
             <div class="form-group">
               <label class="form-label">Hora inicio</label>
-              <input class="form-input" id="obra-f-hi" type="number" min="0" max="23" value="6">
+              <input class="form-input" id="obra-f-hi" type="number" min="0" max="23" value="8">
             </div>
             <div class="form-group">
               <label class="form-label">Hora fin</label>
-              <input class="form-input" id="obra-f-hf" type="number" min="0" max="23" value="18">
+              <input class="form-input" id="obra-f-hf" type="number" min="0" max="23" value="17">
             </div>
             <div class="form-group">
               <label class="form-label">Lluvia DP (mm)</label>
@@ -635,7 +652,7 @@
               <input class="form-input" id="obra-f-vdp" type="number" value="40">
             </div>
             <div class="form-group">
-              <label class="form-label">Condicion DP</label>
+              <label class="form-label">Condición DP</label>
               <select class="form-input form-select" id="obra-f-cdp">
                 <option value="ANY">ANY (cualquiera)</option>
                 <option value="ALL">ALL (ambas)</option>
@@ -650,14 +667,14 @@
             </div>
           </div>
           <div class="form-actions">
-            <button class="btn-save" onclick="guardarObra()">Guardar obra</button>
+            <button class="btn-save" id="btn-guardar-obra" onclick="guardarObra()">Guardar obra</button>
             <button class="btn-cancel" onclick="cancelarFormObra()">Cancelar</button>
           </div>
         </div>
         <div class="admin-section-title">Obras registradas</div>
         <div style="overflow-x:auto;">
           <table class="crud-table" id="tabla-obras">
-            <thead><tr><th>ID</th><th>Descripcion</th><th>Lat/Lon</th><th>Horario</th><th>Activa</th><th></th></tr></thead>
+            <thead><tr><th>ID</th><th>Descripción</th><th>Lat/Lon</th><th>Horario</th><th>Activa</th><th></th></tr></thead>
             <tbody id="tbody-obras"><tr><td colspan="6" style="color:var(--muted);padding:12px;text-align:center;">Cargando...</td></tr></tbody>
           </table>
         </div>
@@ -666,15 +683,15 @@
       <!-- TAB USUARIOS -->
       <div class="admin-tab-panel" id="panel-usuarios">
         <div id="admin-msg-usuarios"></div>
-        <div class="admin-section-title">Nuevo usuario</div>
-        <div class="crud-form">
+        <div class="crud-form" id="form-usuarios">
+          <div class="crud-form-title" id="usr-form-titulo">➕ Nuevo usuario</div>
           <div class="form-grid">
             <div class="form-group form-full">
-              <label class="form-label">Email Google</label>
+              <label class="form-label">Email Google *</label>
               <input class="form-input" id="usr-f-email" type="email" placeholder="usuario@gmail.com">
             </div>
             <div class="form-group">
-              <label class="form-label">Nombre</label>
+              <label class="form-label">Nombre *</label>
               <input class="form-input" id="usr-f-nombre" type="text" placeholder="Nombre apellido">
             </div>
             <div class="form-group">
@@ -685,8 +702,8 @@
               </select>
             </div>
             <div class="form-group form-full">
-              <label class="form-label">Obras (IDs separados por coma, vacio = todas)</label>
-              <input class="form-input" id="usr-f-obras" type="text" placeholder="ej: 1234,5678  o vacio para todas">
+              <label class="form-label">Obras permitidas <span style="font-weight:400;text-transform:none;letter-spacing:0">(vacío = todas)</span></label>
+              <div id="usr-obras-chips" class="obras-chips-wrap"></div>
             </div>
             <div class="form-group">
               <label class="form-label">Activo</label>
@@ -697,7 +714,7 @@
             </div>
           </div>
           <div class="form-actions">
-            <button class="btn-save" onclick="guardarUsuario()">Guardar usuario</button>
+            <button class="btn-save" id="btn-guardar-usuario" onclick="guardarUsuario()">Guardar usuario</button>
             <button class="btn-cancel" onclick="cancelarFormUsuario()">Cancelar</button>
           </div>
         </div>
@@ -1260,7 +1277,9 @@ function cambiarTabMobile(tab) {
 function abrirAdmin() {
   if (userRol !== 'ADMIN') return;
   document.getElementById('admin-overlay').style.display = 'flex';
-  cargarTablaObras();
+  cancelarFormObra();
+  cancelarFormUsuario();
+  cargarTablaObras();   // carga obras → también puebla todasLasObras y chips
   cargarTablaUsuarios();
 }
 function cerrarAdmin() {
@@ -1277,35 +1296,61 @@ function cambiarTabAdmin(tab) {
 }
 
 // ── CRUD OBRAS ────────────────────────────────────────────────
+var todasLasObras = []; // cache para chips de usuarios
+
 function cargarTablaObras() {
-  fetch(API_URL + '?action=obras&email=' + encodeURIComponent(userEmail))
+  var tbody = document.getElementById('tbody-obras');
+  tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);padding:12px;text-align:center;">Cargando...</td></tr>';
+  fetch(API_URL + '?action=allObras&email=' + encodeURIComponent(userEmail))
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      var tbody = document.getElementById('tbody-obras');
-      var obras  = data.obras || [];
-      if (!obras.length) { tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);padding:12px;text-align:center;">Sin obras registradas</td></tr>'; return; }
-      tbody.innerHTML = obras.map(function(o) {
-        return '<tr>' +
-          '<td>' + o.id + '</td>' +
-          '<td>' + o.descripcion + '</td>' +
-          '<td style="font-size:0.68rem">' + o.latitud + '<br>' + o.longitud + '</td>' +
-          '<td>' + o.horaInicio + '-' + o.horaFin + 'hs</td>' +
-          '<td class="' + (o.activa ? 'activo-si' : 'activo-no') + '">' + (o.activa ? 'Si' : 'No') + '</td>' +
-          '<td><div class="td-actions">' +
-            '<button class="btn-edit" onclick="editarObra(' + JSON.stringify(o).replace(/"/g,'&quot;') + ')">Editar</button>' +
-            '<button class="btn-del"  onclick="eliminarObra(\'' + o.id + '\')">Borrar</button>' +
-          '</div></td></tr>';
-      }).join('');
+      todasLasObras = data.obras || [];
+      renderTablaObras(todasLasObras);
+      renderChipsObras(todasLasObras);
+    })
+    .catch(function() {
+      tbody.innerHTML = '<tr><td colspan="6" style="color:#dc2626;padding:12px;text-align:center;">Error al cargar</td></tr>';
     });
 }
 
+function renderTablaObras(obras) {
+  var tbody = document.getElementById('tbody-obras');
+  if (!obras.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);padding:12px;text-align:center;">Sin obras registradas</td></tr>';
+    return;
+  }
+  tbody.innerHTML = obras.map(function(o) {
+    return '<tr id="tr-obra-' + o.id + '">' +
+      '<td><strong>' + o.id + '</strong></td>' +
+      '<td>' + o.descripcion + '</td>' +
+      '<td style="font-size:0.68rem">' + o.latitud + '<br>' + o.longitud + '</td>' +
+      '<td style="font-size:0.72rem">' + o.horaInicio + ':00 - ' + o.horaFin + ':00 hs</td>' +
+      '<td class="' + (o.activa ? 'activo-si' : 'activo-no') + '">' + (o.activa ? '✓ Si' : '✗ No') + '</td>' +
+      '<td><div class="td-actions">' +
+        '<button class="btn-edit" onclick="editarObra(' + JSON.stringify(o).replace(/"/g,'&quot;') + ')">Editar</button>' +
+        '<button class="btn-del"  onclick="eliminarObra(\'' + o.id + '\')">Borrar</button>' +
+      '</div></td></tr>';
+  }).join('');
+}
+
 function guardarObra() {
-  var id      = document.getElementById('obra-f-id').value.trim().padStart(4,'0');
-  var params  = 'email=' + encodeURIComponent(userEmail) +
+  var id   = document.getElementById('obra-f-id').value.trim().padStart(4,'0');
+  var desc = document.getElementById('obra-f-desc').value.trim();
+  var lat  = document.getElementById('obra-f-lat').value.trim();
+  var lon  = document.getElementById('obra-f-lon').value.trim();
+  if (!id || id === '0000' && !editandoObra) { mostrarMsgAdmin('obras','ID de obra requerido (4 dígitos)',false); return; }
+  if (!desc) { mostrarMsgAdmin('obras','La descripción es requerida',false); return; }
+  if (!lat || !lon)  { mostrarMsgAdmin('obras','Latitud y longitud son requeridas',false); return; }
+
+  var btn = document.getElementById('btn-guardar-obra');
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
+  var params = 'email=' + encodeURIComponent(userEmail) +
     '&id='          + encodeURIComponent(id) +
-    '&descripcion=' + encodeURIComponent(document.getElementById('obra-f-desc').value.trim()) +
-    '&latitud='     + encodeURIComponent(document.getElementById('obra-f-lat').value.trim()) +
-    '&longitud='    + encodeURIComponent(document.getElementById('obra-f-lon').value.trim()) +
+    '&descripcion=' + encodeURIComponent(desc) +
+    '&latitud='     + encodeURIComponent(lat) +
+    '&longitud='    + encodeURIComponent(lon) +
     '&horaInicio='  + encodeURIComponent(document.getElementById('obra-f-hi').value) +
     '&horaFin='     + encodeURIComponent(document.getElementById('obra-f-hf').value) +
     '&lluviaDP='    + encodeURIComponent(document.getElementById('obra-f-ldp').value) +
@@ -1317,13 +1362,25 @@ function guardarObra() {
   fetch(API_URL + '?action=' + action + '&' + params)
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      mostrarMsgAdmin('obras', data.ok ? 'Obra guardada correctamente.' : (data.error || 'Error'), data.ok);
+      btn.disabled = false;
+      btn.textContent = 'Guardar obra';
+      mostrarMsgAdmin('obras', data.ok ? '✓ Obra guardada correctamente.' : (data.error || 'Error'), data.ok);
       if (data.ok) { cancelarFormObra(); cargarTablaObras(); }
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.textContent = 'Guardar obra';
+      mostrarMsgAdmin('obras', 'Error de conexión', false);
     });
 }
 
 function editarObra(o) {
   editandoObra = o;
+  // Marcar form como editing
+  document.getElementById('form-obras').classList.add('editing');
+  document.getElementById('obra-form-titulo').textContent = '✏️ Editando obra ' + o.id + ' — ' + o.descripcion;
+  document.getElementById('btn-guardar-obra').textContent = 'Actualizar obra';
+  // Llenar campos
   document.getElementById('obra-f-id').value     = o.id;
   document.getElementById('obra-f-id').disabled  = true;
   document.getElementById('obra-f-desc').value   = o.descripcion;
@@ -1335,91 +1392,177 @@ function editarObra(o) {
   document.getElementById('obra-f-vdp').value    = o.vientoDP;
   document.getElementById('obra-f-cdp').value    = o.condicionDP;
   document.getElementById('obra-f-activa').value = o.activa ? 'true' : 'false';
-  document.querySelector('#panel-obras .crud-form-title') && (document.querySelector('#panel-obras .crud-form-title').textContent = 'Editar obra ' + o.id);
-  document.querySelector('#panel-obras .crud-form').scrollIntoView({behavior:'smooth'});
+  // Resaltar fila
+  document.querySelectorAll('#tbody-obras tr').forEach(function(tr) { tr.classList.remove('fila-editando'); });
+  var trTarget = document.getElementById('tr-obra-' + o.id);
+  if (trTarget) trTarget.classList.add('fila-editando');
+  // Scroll al form
+  document.getElementById('form-obras').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
 function cancelarFormObra() {
   editandoObra = null;
-  ['obra-f-id','obra-f-desc','obra-f-lat','obra-f-lon'].forEach(function(id) { document.getElementById(id).value = ''; });
-  document.getElementById('obra-f-hi').value     = '6';
-  document.getElementById('obra-f-hf').value     = '18';
-  document.getElementById('obra-f-ldp').value    = '5';
-  document.getElementById('obra-f-vdp').value    = '40';
-  document.getElementById('obra-f-cdp').value    = 'ANY';
-  document.getElementById('obra-f-activa').value = 'true';
+  document.getElementById('form-obras').classList.remove('editing');
+  document.getElementById('obra-form-titulo').textContent = '➕ Nueva obra';
+  document.getElementById('btn-guardar-obra').textContent = 'Guardar obra';
+  // Valores por defecto = parámetros de obra 0000
+  var ref = todasLasObras.find(function(o) { return o.id === '0000'; }) || {};
+  document.getElementById('obra-f-id').value     = '';
   document.getElementById('obra-f-id').disabled  = false;
+  document.getElementById('obra-f-desc').value   = '';
+  document.getElementById('obra-f-lat').value    = ref.latitud  || '';
+  document.getElementById('obra-f-lon').value    = ref.longitud || '';
+  document.getElementById('obra-f-hi').value     = ref.horaInicio !== undefined ? ref.horaInicio : 8;
+  document.getElementById('obra-f-hf').value     = ref.horaFin   !== undefined ? ref.horaFin   : 17;
+  document.getElementById('obra-f-ldp').value    = ref.lluviaDP  !== undefined ? ref.lluviaDP  : 5;
+  document.getElementById('obra-f-vdp').value    = ref.vientoDP  !== undefined ? ref.vientoDP  : 40;
+  document.getElementById('obra-f-cdp').value    = ref.condicionDP || 'ANY';
+  document.getElementById('obra-f-activa').value = 'true';
+  // Quitar resaltado de filas
+  document.querySelectorAll('#tbody-obras tr').forEach(function(tr) { tr.classList.remove('fila-editando'); });
 }
 
 function eliminarObra(id) {
-  if (!confirm('¿Eliminar la obra ' + id + '? Esta acción no se puede deshacer.')) return;
+  if (!confirm('¿Eliminar la obra ' + id + '?\nEsta acción no se puede deshacer.')) return;
   fetch(API_URL + '?action=deleteObra&email=' + encodeURIComponent(userEmail) + '&id=' + encodeURIComponent(id))
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      mostrarMsgAdmin('obras', data.ok ? 'Obra eliminada.' : (data.error||'Error'), data.ok);
+      mostrarMsgAdmin('obras', data.ok ? '✓ Obra eliminada.' : (data.error||'Error'), data.ok);
       if (data.ok) cargarTablaObras();
     });
 }
 
+// ── CHIPS DE OBRAS para formulario de usuarios ─────────────────
+var chipsObrasSeleccionadas = [];
+
+function renderChipsObras(obras) {
+  var wrap = document.getElementById('usr-obras-chips');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  // Chip "Todas"
+  var chipTodas = document.createElement('span');
+  chipTodas.className = 'obra-chip obra-chip-todas' + (chipsObrasSeleccionadas.length === 0 ? ' selected' : '');
+  chipTodas.textContent = 'Todas';
+  chipTodas.onclick = function() {
+    chipsObrasSeleccionadas = [];
+    renderChipsObras(obras);
+  };
+  wrap.appendChild(chipTodas);
+  // Chips por obra
+  obras.forEach(function(o) {
+    var chip = document.createElement('span');
+    var sel  = chipsObrasSeleccionadas.indexOf(o.id) !== -1;
+    chip.className  = 'obra-chip' + (sel ? ' selected' : '');
+    chip.textContent = o.id + ' ' + o.descripcion;
+    chip.onclick = function() {
+      var idx = chipsObrasSeleccionadas.indexOf(o.id);
+      if (idx === -1) chipsObrasSeleccionadas.push(o.id);
+      else chipsObrasSeleccionadas.splice(idx, 1);
+      renderChipsObras(obras);
+    };
+    wrap.appendChild(chip);
+  });
+}
+
 // ── CRUD USUARIOS ─────────────────────────────────────────────
 function cargarTablaUsuarios() {
+  var tbody = document.getElementById('tbody-usuarios');
+  tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);padding:12px;text-align:center;">Cargando...</td></tr>';
   fetch(API_URL + '?action=usuarios&email=' + encodeURIComponent(userEmail))
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      var tbody    = document.getElementById('tbody-usuarios');
       var usuarios = data.usuarios || [];
-      if (!usuarios.length) { tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);padding:12px;text-align:center;">Sin usuarios</td></tr>'; return; }
+      if (!usuarios.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);padding:12px;text-align:center;">Sin usuarios</td></tr>';
+        return;
+      }
       tbody.innerHTML = usuarios.map(function(u) {
-        return '<tr>' +
+        return '<tr id="tr-usr-' + u.email.replace(/[@.]/g,'-') + '">' +
           '<td style="font-size:0.7rem">' + u.email + '</td>' +
           '<td>' + u.nombre + '</td>' +
-          '<td><span style="font-size:0.68rem;padding:2px 6px;border-radius:8px;background:' + (u.rol==='ADMIN'?'#ede9fe;color:#6d28d9':'#f1f5f9;color:#475569') + '">' + u.rol + '</span></td>' +
-          '<td style="font-size:0.68rem">' + (u.obras.length ? u.obras.join(', ') : 'Todas') + '</td>' +
-          '<td class="' + (u.activo?'activo-si':'activo-no') + '">' + (u.activo?'Si':'No') + '</td>' +
+          '<td><span style="font-size:0.68rem;padding:2px 8px;border-radius:8px;background:' + (u.rol==='ADMIN'?'#ede9fe;color:#6d28d9':'#f1f5f9;color:#475569') + '">' + u.rol + '</span></td>' +
+          '<td style="font-size:0.68rem">' + (u.obras && u.obras.length ? u.obras.join(', ') : 'Todas') + '</td>' +
+          '<td class="' + (u.activo?'activo-si':'activo-no') + '">' + (u.activo?'✓ Si':'✗ No') + '</td>' +
           '<td><div class="td-actions">' +
             '<button class="btn-edit" onclick="editarUsuario(' + JSON.stringify(u).replace(/"/g,'&quot;') + ')">Editar</button>' +
             '<button class="btn-del"  onclick="eliminarUsuario(\'' + u.email + '\')">Borrar</button>' +
           '</div></td></tr>';
       }).join('');
+    })
+    .catch(function() {
+      tbody.innerHTML = '<tr><td colspan="6" style="color:#dc2626;padding:12px;text-align:center;">Error al cargar</td></tr>';
     });
 }
 
 function guardarUsuario() {
   var email  = editandoUsuario ? editandoUsuario.email : document.getElementById('usr-f-email').value.trim();
-  var action = editandoUsuario ? 'editUsuario' : 'addUsuario';
-  var params = 'email=' + encodeURIComponent(userEmail) +
+  var nombre = document.getElementById('usr-f-nombre').value.trim();
+  if (!email)  { mostrarMsgAdmin('usuarios','Email requerido',false); return; }
+  if (!nombre) { mostrarMsgAdmin('usuarios','Nombre requerido',false); return; }
+
+  var btn = document.getElementById('btn-guardar-usuario');
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
+  var obrasStr = chipsObrasSeleccionadas.join(',');
+  var action   = editandoUsuario ? 'editUsuario' : 'addUsuario';
+  var params   = 'email='       + encodeURIComponent(userEmail) +
     '&emailTarget=' + encodeURIComponent(email) +
-    '&nombre='      + encodeURIComponent(document.getElementById('usr-f-nombre').value.trim()) +
+    '&nombre='      + encodeURIComponent(nombre) +
     '&rol='         + encodeURIComponent(document.getElementById('usr-f-rol').value) +
-    '&obras='       + encodeURIComponent(document.getElementById('usr-f-obras').value.trim()) +
+    '&obras='       + encodeURIComponent(obrasStr) +
     '&activo='      + encodeURIComponent(document.getElementById('usr-f-activo').value);
   if (!editandoUsuario) params += '&nuevoEmail=' + encodeURIComponent(email);
 
   fetch(API_URL + '?action=' + action + '&' + params)
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      mostrarMsgAdmin('usuarios', data.ok ? 'Usuario guardado.' : (data.error||'Error'), data.ok);
+      btn.disabled = false;
+      btn.textContent = 'Guardar usuario';
+      mostrarMsgAdmin('usuarios', data.ok ? '✓ Usuario guardado.' : (data.error||'Error'), data.ok);
       if (data.ok) { cancelarFormUsuario(); cargarTablaUsuarios(); }
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.textContent = 'Guardar usuario';
+      mostrarMsgAdmin('usuarios','Error de conexión',false);
     });
 }
 
 function editarUsuario(u) {
   editandoUsuario = u;
-  document.getElementById('usr-f-email').value  = u.email;
+  document.getElementById('form-usuarios').classList.add('editing');
+  document.getElementById('usr-form-titulo').textContent = '✏️ Editando: ' + u.nombre;
+  document.getElementById('btn-guardar-usuario').textContent = 'Actualizar usuario';
+  document.getElementById('usr-f-email').value    = u.email;
   document.getElementById('usr-f-email').disabled = true;
-  document.getElementById('usr-f-nombre').value = u.nombre;
-  document.getElementById('usr-f-rol').value    = u.rol;
-  document.getElementById('usr-f-obras').value  = u.obras.join(',');
-  document.getElementById('usr-f-activo').value = u.activo ? 'true' : 'false';
-  document.querySelector('#panel-usuarios .crud-form').scrollIntoView({behavior:'smooth'});
+  document.getElementById('usr-f-nombre').value   = u.nombre;
+  document.getElementById('usr-f-rol').value      = u.rol;
+  document.getElementById('usr-f-activo').value   = u.activo ? 'true' : 'false';
+  // Chips
+  chipsObrasSeleccionadas = u.obras ? u.obras.slice() : [];
+  renderChipsObras(todasLasObras);
+  // Resaltar fila
+  document.querySelectorAll('#tbody-usuarios tr').forEach(function(tr) { tr.classList.remove('fila-editando'); });
+  var key = u.email.replace(/[@.]/g,'-');
+  var trTarget = document.getElementById('tr-usr-' + key);
+  if (trTarget) trTarget.classList.add('fila-editando');
+  document.getElementById('form-usuarios').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
 function cancelarFormUsuario() {
   editandoUsuario = null;
-  ['usr-f-email','usr-f-nombre','usr-f-obras'].forEach(function(id) { document.getElementById(id).value=''; });
-  document.getElementById('usr-f-rol').value    = 'USER';
-  document.getElementById('usr-f-activo').value = 'true';
+  document.getElementById('form-usuarios').classList.remove('editing');
+  document.getElementById('usr-form-titulo').textContent = '➕ Nuevo usuario';
+  document.getElementById('btn-guardar-usuario').textContent = 'Guardar usuario';
+  document.getElementById('usr-f-email').value    = '';
   document.getElementById('usr-f-email').disabled = false;
+  document.getElementById('usr-f-nombre').value   = '';
+  document.getElementById('usr-f-rol').value      = 'USER';
+  document.getElementById('usr-f-activo').value   = 'true';
+  chipsObrasSeleccionadas = [];
+  renderChipsObras(todasLasObras);
+  document.querySelectorAll('#tbody-usuarios tr').forEach(function(tr) { tr.classList.remove('fila-editando'); });
 }
 
 function eliminarUsuario(email) {
@@ -1427,7 +1570,7 @@ function eliminarUsuario(email) {
   fetch(API_URL + '?action=deleteUsuario&email=' + encodeURIComponent(userEmail) + '&emailTarget=' + encodeURIComponent(email))
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      mostrarMsgAdmin('usuarios', data.ok ? 'Usuario eliminado.' : (data.error||'Error'), data.ok);
+      mostrarMsgAdmin('usuarios', data.ok ? '✓ Usuario eliminado.' : (data.error||'Error'), data.ok);
       if (data.ok) cargarTablaUsuarios();
     });
 }
@@ -1435,7 +1578,7 @@ function eliminarUsuario(email) {
 function mostrarMsgAdmin(tab, msg, ok) {
   var el = document.getElementById('admin-msg-' + tab);
   el.innerHTML = '<div class="admin-msg ' + (ok?'ok':'err') + '">' + msg + '</div>';
-  setTimeout(function() { el.innerHTML = ''; }, 4000);
+  setTimeout(function() { el.innerHTML = ''; }, 5000);
 }
 
 // ── HELPERS ───────────────────────────────────────────────────
