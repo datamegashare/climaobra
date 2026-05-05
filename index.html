@@ -113,7 +113,8 @@
   .denied-icon  { font-size: 3.5rem; margin-bottom: 20px; display: block; }
   .denied-title { font-size: 1rem; font-weight: 600; margin-bottom: 10px; }
   .denied-msg   { font-size: 0.82rem; color: var(--muted); line-height: 1.6; margin-bottom: 20px; }
-  .denied-email { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 0.78rem; color: var(--muted); margin-bottom: 24px; }
+  .denied-email { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 0.78rem; color: var(--muted); margin-bottom: 16px; }
+  #solicitud-estado { font-size: 0.78rem; min-height: 28px; margin-bottom: 10px; text-align: center; }
   .btn-logout   { padding: 8px 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-size: 0.78rem; cursor: pointer; font-family: 'DM Sans', sans-serif; }
 
   /* ── LOADING ─────────────────────────────────────────────── */
@@ -295,7 +296,7 @@
     align-items: flex-start; justify-content: flex-end;
   }
   #admin-panel {
-    background: var(--surface); width: 100%; max-width: 520px; height: 100%;
+    background: var(--surface); width: 100%; max-width: 720px; height: 100%;
     overflow-y: auto; padding: 0;
     box-shadow: -4px 0 24px rgba(0,0,0,0.15);
     display: flex; flex-direction: column;
@@ -405,7 +406,16 @@
     #top-block { flex-direction: column; }
     #top-header { display: none; }
     #map-col { width: 100%; height: 140px; }
-    #cards-row { grid-template-columns: repeat(2, 1fr); }
+    #cards-row {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      margin-top: 8px;
+      padding: 10px 0 0;
+      border-top: 2px solid var(--accent);
+    }
+    .card { padding: 8px 10px; }
+    .card-value { font-size: 1.5rem; }
+    .card-label { font-size: 0.58rem; }
     #dias-y-grafico { grid-template-columns: 1fr; }
     .chart-wrap { min-width: 300px; }
     .header-right { display: none; }
@@ -431,7 +441,7 @@
     <div class="login-logo">&#127959; ClimaObra</div>
     <div class="login-sub">Sistema de registro climatico para obra</div>
     <div id="g-btn-wrap"></div>
-    <div class="login-ver">v11.2</div>
+    <div class="login-ver">v11.3</div>
   </div>
 </div>
 
@@ -459,15 +469,16 @@
 <!-- ACCESO DENEGADO -->
 <div id="denied-screen">
   <div class="denied-box">
-    <div class="login-logo">&#127959; ClimaObra</div>
-    <span class="denied-icon">&#128274;</span>
+    <div class="login-logo">🏗️ ClimaObra</div>
+    <span class="denied-icon">🔒</span>
     <div class="denied-title">Acceso restringido</div>
-    <div class="denied-msg">Tu usuario no esta registrado o no tiene acceso habilitado.</div>
+    <div class="denied-msg">Tu usuario no está registrado o no tiene acceso habilitado.</div>
     <div class="denied-email" id="denied-email">-</div>
-    <div style="font-size:0.76rem;color:var(--muted);margin-bottom:20px;line-height:1.6;">
-      Comunicate con el administrador del sistema para solicitar acceso.
-    </div>
-    <button class="btn-logout" onclick="cerrarSesion()">Cerrar sesion e intentar con otra cuenta</button>
+    <div id="solicitud-estado"></div>
+    <button class="btn-save" id="btn-solicitar" onclick="solicitarAcceso()" style="width:100%;margin-bottom:10px;">
+      📩 Solicitar acceso al administrador
+    </button>
+    <button class="btn-logout" onclick="cerrarSesion()">Cerrar sesión e intentar con otra cuenta</button>
   </div>
 </div>
 
@@ -690,6 +701,14 @@
         <div class="admin-section-title">Obras registradas</div>
         <div class="admin-table-wrap">
           <table class="crud-table" id="tabla-obras">
+            <colgroup>
+              <col style="width:60px">
+              <col style="width:auto">
+              <col style="width:130px">
+              <col style="width:100px">
+              <col style="width:55px">
+              <col style="width:90px">
+            </colgroup>
             <thead><tr><th>ID</th><th>Descripción</th><th>Lat/Lon</th><th>Horario</th><th>Activa</th><th></th></tr></thead>
             <tbody id="tbody-obras"><tr><td colspan="6" style="color:var(--muted);padding:12px;text-align:center;">Cargando...</td></tr></tbody>
           </table>
@@ -737,6 +756,14 @@
         <div class="admin-section-title">Usuarios registrados</div>
         <div class="admin-table-wrap">
           <table class="crud-table" id="tabla-usuarios">
+            <colgroup>
+              <col style="width:auto">
+              <col style="width:110px">
+              <col style="width:65px">
+              <col style="width:80px">
+              <col style="width:55px">
+              <col style="width:90px">
+            </colgroup>
             <thead><tr><th>Email</th><th>Nombre</th><th>Rol</th><th>Obras</th><th>Activo</th><th></th></tr></thead>
             <tbody id="tbody-usuarios"><tr><td colspan="6" style="color:var(--muted);padding:12px;text-align:center;">Cargando...</td></tr></tbody>
           </table>
@@ -1094,6 +1121,41 @@ function mostrarDenegado(email) {
   document.getElementById('selector-screen').style.display = 'none';
   document.getElementById('app').style.display             = 'none';
   document.getElementById('denied-email').textContent      = email;
+  // Resetear estado de solicitud
+  document.getElementById('solicitud-estado').innerHTML    = '';
+  var btn = document.getElementById('btn-solicitar');
+  if (btn) { btn.disabled = false; btn.textContent = '📩 Solicitar acceso al administrador'; }
+}
+
+function solicitarAcceso() {
+  var email  = document.getElementById('denied-email').textContent.trim();
+  var nombre = userNombre || '';
+  if (!email || email === '-') return;
+  var btn    = document.getElementById('btn-solicitar');
+  var estado = document.getElementById('solicitud-estado');
+  btn.disabled    = true;
+  btn.textContent = 'Enviando...';
+  estado.innerHTML = '';
+  var url = API_URL + '?action=solicitarAcceso' +
+    '&emailSolicitante='  + encodeURIComponent(email) +
+    '&nombreSolicitante=' + encodeURIComponent(nombre);
+  fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        estado.innerHTML = '<span style="color:#16a34a;font-weight:600;">✓ Solicitud enviada. El administrador recibirá un email.</span>';
+        btn.textContent  = '✓ Solicitud enviada';
+      } else {
+        estado.innerHTML = '<span style="color:#dc2626;">Error al enviar: ' + (data.error || 'intenta de nuevo') + '</span>';
+        btn.disabled     = false;
+        btn.textContent  = '📩 Solicitar acceso al administrador';
+      }
+    })
+    .catch(function() {
+      estado.innerHTML = '<span style="color:#dc2626;">Error de conexión. Intenta de nuevo.</span>';
+      btn.disabled     = false;
+      btn.textContent  = '📩 Solicitar acceso al administrador';
+    });
 }
 function mostrarApp() {
   document.getElementById('login-screen').style.display    = 'none';
