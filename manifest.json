@@ -1,0 +1,19 @@
+{
+  "name": "ClimaObra Dashboard",
+  "short_name": "ClimaObra",
+  "description": "Sistema de registro climatico para obra",
+  "start_url": "/climaobra/",
+  "scope": "/climaobra/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#1e2128",
+  "theme_color": "#1e2128",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
