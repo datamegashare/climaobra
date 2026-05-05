@@ -341,10 +341,29 @@
   .btn-save:hover   { opacity: 0.85; }
   .btn-cancel { padding: 7px 14px; background: var(--surface); color: var(--muted); border: 1px solid var(--border); border-radius: 6px; font-size: 0.78rem; cursor: pointer; font-family: 'DM Sans', sans-serif; }
 
-  /* Tabla sin scroll horizontal — columnas se adaptan */
-  .admin-table-wrap { width: 100%; }
-  .crud-table { table-layout: fixed; }
-  .crud-table td, .crud-table th { word-break: break-word; }
+  /* Cards CRUD — estilo Vale Digital */
+  .crud-cards { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .crud-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px;
+    transition: border-color 0.15s;
+  }
+  .crud-card:hover { border-color: #cbd5e1; }
+  .crud-card.editando { border-left: 3px solid var(--accent); }
+  .crud-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+  .crud-card-title { font-size: 0.88rem; font-weight: 600; color: var(--text); }
+  .crud-card-badge { font-size: 0.62rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; white-space: nowrap; flex-shrink: 0; }
+  .badge-activo   { background: #dcfce7; color: #15803d; }
+  .badge-inactivo { background: #fee2e2; color: #b91c1c; }
+  .badge-admin    { background: #ede9fe; color: #6d28d9; }
+  .badge-user     { background: #f1f5f9; color: #475569; }
+  .crud-card-meta { font-size: 0.72rem; color: var(--muted); line-height: 1.7; }
+  .crud-card-meta span { margin-right: 12px; }
+  .crud-card-actions { display: flex; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border); }
+  .btn-card-edit { padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-size: 0.72rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+  .btn-card-edit:hover { border-color: var(--admin); color: var(--admin); }
+  .btn-card-del  { padding: 4px 12px; border-radius: 6px; border: 1px solid #fca5a5; background: #fff5f5; color: #dc2626; font-size: 0.72rem; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .btn-card-del:hover { background: #fee2e2; }
   .crud-table th { background: var(--dark); color: var(--accent); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 7px 10px; text-align: left; font-weight: 600; }
   .crud-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
   .crud-table tr:hover td { background: #f8fafc; }
@@ -373,8 +392,6 @@
   /* Botón loading */
   .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
 
-  /* Fila activa en tabla */
-  .crud-table tr.fila-editando td { background: #fef9ec !important; }
 
   /* ── MOBILE BOTTOM TAB BAR ───────────────────────────────── */
   #mobile-tabs {
@@ -441,7 +458,7 @@
     <div class="login-logo">&#127959; ClimaObra</div>
     <div class="login-sub">Sistema de registro climatico para obra</div>
     <div id="g-btn-wrap"></div>
-    <div class="login-ver">v11.3</div>
+    <div class="login-ver">v11.4</div>
   </div>
 </div>
 
@@ -474,10 +491,10 @@
     <div class="denied-title">Acceso restringido</div>
     <div class="denied-msg">Tu usuario no está registrado o no tiene acceso habilitado.</div>
     <div class="denied-email" id="denied-email">-</div>
-    <div id="solicitud-estado"></div>
-    <button class="btn-save" id="btn-solicitar" onclick="solicitarAcceso()" style="width:100%;margin-bottom:10px;">
-      📩 Solicitar acceso al administrador
-    </button>
+    <div style="font-size:0.78rem;color:var(--muted);line-height:1.7;margin-bottom:24px;text-align:center;">
+      Para solicitar acceso escribí a<br>
+      <a href="mailto:datamegashare@gmail.com?subject=[ClimaObra] Solicitud de acceso" style="color:var(--accent);font-weight:600;">datamegashare@gmail.com</a>
+    </div>
     <button class="btn-logout" onclick="cerrarSesion()">Cerrar sesión e intentar con otra cuenta</button>
   </div>
 </div>
@@ -488,7 +505,10 @@
     <div id="mobile-header-info">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
         <div class="mob-obra" id="mob-obra-name">-</div>
-        <button id="btn-install-mobile" onclick="instalarPWA()" style="display:none;padding:3px 10px;border-radius:10px;border:1px solid var(--accent);background:none;color:var(--accent);font-size:0.62rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">⬇ Instalar</button>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button id="btn-cambiar-obra-mobile" onclick="cambiarObra()" style="display:none;padding:3px 8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:0.62rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">⇄ Obra</button>
+          <button id="btn-install-mobile" onclick="instalarPWA()" style="display:none;padding:3px 10px;border-radius:10px;border:1px solid var(--accent);background:none;color:var(--accent);font-size:0.62rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">⬇ Instalar</button>
+        </div>
       </div>
       <div class="mob-sub" id="mob-header-sub">-</div>
       <span class="mob-badge" id="mob-user-badge">-</span>
@@ -699,19 +719,8 @@
           </div>
         </div>
         <div class="admin-section-title">Obras registradas</div>
-        <div class="admin-table-wrap">
-          <table class="crud-table" id="tabla-obras">
-            <colgroup>
-              <col style="width:60px">
-              <col style="width:auto">
-              <col style="width:130px">
-              <col style="width:100px">
-              <col style="width:55px">
-              <col style="width:90px">
-            </colgroup>
-            <thead><tr><th>ID</th><th>Descripción</th><th>Lat/Lon</th><th>Horario</th><th>Activa</th><th></th></tr></thead>
-            <tbody id="tbody-obras"><tr><td colspan="6" style="color:var(--muted);padding:12px;text-align:center;">Cargando...</td></tr></tbody>
-          </table>
+        <div class="crud-cards" id="cards-obras">
+          <div style="color:var(--muted);padding:12px;text-align:center;font-size:0.78rem;">Cargando...</div>
         </div>
       </div>
 
@@ -754,19 +763,8 @@
           </div>
         </div>
         <div class="admin-section-title">Usuarios registrados</div>
-        <div class="admin-table-wrap">
-          <table class="crud-table" id="tabla-usuarios">
-            <colgroup>
-              <col style="width:auto">
-              <col style="width:110px">
-              <col style="width:65px">
-              <col style="width:80px">
-              <col style="width:55px">
-              <col style="width:90px">
-            </colgroup>
-            <thead><tr><th>Email</th><th>Nombre</th><th>Rol</th><th>Obras</th><th>Activo</th><th></th></tr></thead>
-            <tbody id="tbody-usuarios"><tr><td colspan="6" style="color:var(--muted);padding:12px;text-align:center;">Cargando...</td></tr></tbody>
-          </table>
+        <div class="crud-cards" id="cards-usuarios">
+          <div style="color:var(--muted);padding:12px;text-align:center;font-size:0.78rem;">Cargando...</div>
         </div>
       </div>
     </div>
@@ -1056,8 +1054,12 @@ function iniciarDashboard(data) {
   document.getElementById('mob-user-badge').textContent = userNombre || userEmail;
 
   // Botón cambiar obra (solo si hay más de una)
-  var btnCambiar = document.getElementById('btn-cambiar-obra');
-  if (obrasPermitidas.length > 1) btnCambiar.style.display = 'inline-block';
+  var btnCambiar       = document.getElementById('btn-cambiar-obra');
+  var btnCambiarMobile = document.getElementById('btn-cambiar-obra-mobile');
+  if (obrasPermitidas.length > 1) {
+    btnCambiar.style.display       = 'inline-block';
+    btnCambiarMobile.style.display = 'inline-block';
+  }
 
   // Badge ADMIN
   var adminBadge   = document.getElementById('admin-badge');
@@ -1384,37 +1386,45 @@ function cambiarTabAdmin(tab) {
 var todasLasObras = []; // cache para chips de usuarios
 
 function cargarTablaObras() {
-  var tbody = document.getElementById('tbody-obras');
-  tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);padding:12px;text-align:center;">Cargando...</td></tr>';
+  var wrap = document.getElementById('cards-obras');
+  wrap.innerHTML = '<div style="color:var(--muted);padding:12px;text-align:center;font-size:0.78rem;">Cargando...</div>';
   fetch(API_URL + '?action=allObras&email=' + encodeURIComponent(userEmail))
     .then(function(r) { return r.json(); })
     .then(function(data) {
       todasLasObras = data.obras || [];
-      renderTablaObras(todasLasObras);
+      renderCardsObras(todasLasObras);
       renderChipsObras(todasLasObras);
     })
     .catch(function() {
-      tbody.innerHTML = '<tr><td colspan="6" style="color:#dc2626;padding:12px;text-align:center;">Error al cargar</td></tr>';
+      wrap.innerHTML = '<div style="color:#dc2626;padding:12px;text-align:center;font-size:0.78rem;">Error al cargar</div>';
     });
 }
 
-function renderTablaObras(obras) {
-  var tbody = document.getElementById('tbody-obras');
+function renderCardsObras(obras) {
+  var wrap = document.getElementById('cards-obras');
   if (!obras.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);padding:12px;text-align:center;">Sin obras registradas</td></tr>';
+    wrap.innerHTML = '<div style="color:var(--muted);padding:12px;text-align:center;font-size:0.78rem;">Sin obras registradas</div>';
     return;
   }
-  tbody.innerHTML = obras.map(function(o) {
-    return '<tr id="tr-obra-' + o.id + '">' +
-      '<td><strong>' + o.id + '</strong></td>' +
-      '<td>' + o.descripcion + '</td>' +
-      '<td style="font-size:0.68rem">' + o.latitud + '<br>' + o.longitud + '</td>' +
-      '<td style="font-size:0.72rem">' + o.horaInicio + ':00 - ' + o.horaFin + ':00 hs</td>' +
-      '<td class="' + (o.activa ? 'activo-si' : 'activo-no') + '">' + (o.activa ? '✓ Si' : '✗ No') + '</td>' +
-      '<td><div class="td-actions">' +
-        '<button class="btn-edit" onclick="editarObra(' + JSON.stringify(o).replace(/"/g,'&quot;') + ')">Editar</button>' +
-        '<button class="btn-del"  onclick="eliminarObra(\'' + o.id + '\')">Borrar</button>' +
-      '</div></td></tr>';
+  wrap.innerHTML = obras.map(function(o) {
+    var oJson = JSON.stringify(o).replace(/"/g,'&quot;');
+    return '<div class="crud-card" id="card-obra-' + o.id + '">' +
+      '<div class="crud-card-header">' +
+        '<div class="crud-card-title">' + o.id + ' — ' + o.descripcion + '</div>' +
+        '<span class="crud-card-badge ' + (o.activa ? 'badge-activo' : 'badge-inactivo') + '">' +
+          (o.activa ? '✓ ACTIVA' : '✗ INACTIVA') +
+        '</span>' +
+      '</div>' +
+      '<div class="crud-card-meta">' +
+        '<span>📍 ' + o.latitud + '  ' + o.longitud + '</span>' +
+        '<span>🕐 ' + o.horaInicio + ':00 – ' + o.horaFin + ':00 hs</span>' +
+        '<span>💧 ' + o.lluviaDP + 'mm  💨 ' + o.vientoDP + 'km/h  ' + o.condicionDP + '</span>' +
+      '</div>' +
+      '<div class="crud-card-actions">' +
+        '<button class="btn-card-edit" onclick="editarObra(' + oJson + ')">✏️ Editar</button>' +
+        '<button class="btn-card-del"  onclick="eliminarObra(\'' + o.id + '\')">🗑 Borrar</button>' +
+      '</div>' +
+    '</div>';
   }).join('');
 }
 
@@ -1478,9 +1488,9 @@ function editarObra(o) {
   document.getElementById('obra-f-cdp').value    = o.condicionDP;
   document.getElementById('obra-f-activa').value = o.activa ? 'true' : 'false';
   // Resaltar fila
-  document.querySelectorAll('#tbody-obras tr').forEach(function(tr) { tr.classList.remove('fila-editando'); });
-  var trTarget = document.getElementById('tr-obra-' + o.id);
-  if (trTarget) trTarget.classList.add('fila-editando');
+  document.querySelectorAll('.crud-card').forEach(function(c) { c.classList.remove('editando'); });
+  var cardTarget = document.getElementById('card-obra-' + o.id);
+  if (cardTarget) cardTarget.classList.add('editando');
   // Scroll al form
   document.getElementById('form-obras').scrollIntoView({behavior:'smooth', block:'start'});
 }
@@ -1504,7 +1514,7 @@ function cancelarFormObra() {
   document.getElementById('obra-f-cdp').value    = ref.condicionDP || 'ANY';
   document.getElementById('obra-f-activa').value = 'true';
   // Quitar resaltado de filas
-  document.querySelectorAll('#tbody-obras tr').forEach(function(tr) { tr.classList.remove('fila-editando'); });
+  document.querySelectorAll('.crud-card').forEach(function(c) { c.classList.remove('editando'); });
 }
 
 function eliminarObra(id) {
@@ -1551,31 +1561,40 @@ function renderChipsObras(obras) {
 
 // ── CRUD USUARIOS ─────────────────────────────────────────────
 function cargarTablaUsuarios() {
-  var tbody = document.getElementById('tbody-usuarios');
-  tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);padding:12px;text-align:center;">Cargando...</td></tr>';
+  var wrap = document.getElementById('cards-usuarios');
+  wrap.innerHTML = '<div style="color:var(--muted);padding:12px;text-align:center;font-size:0.78rem;">Cargando...</div>';
   fetch(API_URL + '?action=usuarios&email=' + encodeURIComponent(userEmail))
     .then(function(r) { return r.json(); })
     .then(function(data) {
       var usuarios = data.usuarios || [];
       if (!usuarios.length) {
-        tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);padding:12px;text-align:center;">Sin usuarios</td></tr>';
+        wrap.innerHTML = '<div style="color:var(--muted);padding:12px;text-align:center;font-size:0.78rem;">Sin usuarios</div>';
         return;
       }
-      tbody.innerHTML = usuarios.map(function(u) {
-        return '<tr id="tr-usr-' + u.email.replace(/[@.]/g,'-') + '">' +
-          '<td style="font-size:0.7rem">' + u.email + '</td>' +
-          '<td>' + u.nombre + '</td>' +
-          '<td><span style="font-size:0.68rem;padding:2px 8px;border-radius:8px;background:' + (u.rol==='ADMIN'?'#ede9fe;color:#6d28d9':'#f1f5f9;color:#475569') + '">' + u.rol + '</span></td>' +
-          '<td style="font-size:0.68rem">' + (u.obras && u.obras.length ? u.obras.join(', ') : 'Todas') + '</td>' +
-          '<td class="' + (u.activo?'activo-si':'activo-no') + '">' + (u.activo?'✓ Si':'✗ No') + '</td>' +
-          '<td><div class="td-actions">' +
-            '<button class="btn-edit" onclick="editarUsuario(' + JSON.stringify(u).replace(/"/g,'&quot;') + ')">Editar</button>' +
-            '<button class="btn-del"  onclick="eliminarUsuario(\'' + u.email + '\')">Borrar</button>' +
-          '</div></td></tr>';
+      wrap.innerHTML = usuarios.map(function(u) {
+        var uJson = JSON.stringify(u).replace(/"/g,'&quot;');
+        var key   = u.email.replace(/[@.]/g,'-');
+        return '<div class="crud-card" id="card-usr-' + key + '">' +
+          '<div class="crud-card-header">' +
+            '<div class="crud-card-title">' + u.nombre + '</div>' +
+            '<div style="display:flex;gap:6px;">' +
+              '<span class="crud-card-badge ' + (u.rol==='ADMIN'?'badge-admin':'badge-user') + '">' + u.rol + '</span>' +
+              '<span class="crud-card-badge ' + (u.activo?'badge-activo':'badge-inactivo') + '">' + (u.activo?'ACTIVO':'INACTIVO') + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="crud-card-meta">' +
+            '<span>✉ ' + u.email + '</span>' +
+            '<span>🏗 ' + (u.obras && u.obras.length ? u.obras.join(', ') : 'Todas las obras') + '</span>' +
+          '</div>' +
+          '<div class="crud-card-actions">' +
+            '<button class="btn-card-edit" onclick="editarUsuario(' + uJson + ')">✏️ Editar</button>' +
+            '<button class="btn-card-del"  onclick="eliminarUsuario(\'' + u.email + '\')">🗑 Borrar</button>' +
+          '</div>' +
+        '</div>';
       }).join('');
     })
     .catch(function() {
-      tbody.innerHTML = '<tr><td colspan="6" style="color:#dc2626;padding:12px;text-align:center;">Error al cargar</td></tr>';
+      wrap.innerHTML = '<div style="color:#dc2626;padding:12px;text-align:center;font-size:0.78rem;">Error al cargar</div>';
     });
 }
 
@@ -1628,10 +1647,10 @@ function editarUsuario(u) {
   chipsObrasSeleccionadas = u.obras ? u.obras.slice() : [];
   renderChipsObras(todasLasObras);
   // Resaltar fila
-  document.querySelectorAll('#tbody-usuarios tr').forEach(function(tr) { tr.classList.remove('fila-editando'); });
+  document.querySelectorAll('#cards-usuarios .crud-card').forEach(function(c) { c.classList.remove('editando'); });
   var key = u.email.replace(/[@.]/g,'-');
-  var trTarget = document.getElementById('tr-usr-' + key);
-  if (trTarget) trTarget.classList.add('fila-editando');
+  var cardTarget = document.getElementById('card-usr-' + key);
+  if (cardTarget) cardTarget.classList.add('editando');
   document.getElementById('form-usuarios').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
@@ -1647,7 +1666,7 @@ function cancelarFormUsuario() {
   document.getElementById('usr-f-activo').value   = 'true';
   chipsObrasSeleccionadas = [];
   renderChipsObras(todasLasObras);
-  document.querySelectorAll('#tbody-usuarios tr').forEach(function(tr) { tr.classList.remove('fila-editando'); });
+  document.querySelectorAll('#cards-usuarios .crud-card').forEach(function(c) { c.classList.remove('editando'); });
 }
 
 function eliminarUsuario(email) {
