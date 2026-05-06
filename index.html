@@ -472,7 +472,7 @@
     <div class="obras-lista" id="obras-lista"></div>
     <div style="display:flex;gap:8px;align-items:center;">
       <button class="btn-ingresar" id="btn-ingresar" onclick="ingresarObra()" disabled>Ingresar</button>
-      <button id="btn-cancelar-selector" onclick="cancelarSelector()" style="display:none;flex:1;padding:10px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:0.85rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Cancelar</button>
+      <button id="btn-cancelar-selector" onclick="cancelarSelector()" style="display:none;flex:1;padding:10px;background:none;border:1px solid #e2e8f0;border-radius:8px;color:#888;font-size:0.85rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Cancelar</button>
     </div>
     <div class="selector-footer">
       <span class="selector-user" id="selector-user"></span>
@@ -600,7 +600,7 @@
           <button class="btn-periodo"        id="btn-p28" onclick="cambiarPeriodo(28)">28 dias</button>
         </div>
         <span style="font-size:0.68rem;color:var(--muted);">temperatura - viento - lluvia</span>
-        <button id="btn-exportar" onclick="abrirExportar()" style="display:none;margin-left:auto;padding:5px 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">&#8595; Exportar XLSX</button>
+        <button id="btn-exportar" onclick="abrirExportar()" style="display:none;margin-left:auto;padding:5px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">&#8595; Exportar XLSX</button>
       </div>
       <div class="chart-box">
         <div class="chart-wrap"><canvas id="chart7"></canvas></div>
@@ -1717,7 +1717,190 @@ if ('serviceWorker' in navigator) {
 }
 
 
-</html>
+// ═══════════════════════════════════════════════════════════════
+//  v12.0 — NUEVAS FUNCIONES
+// ═══════════════════════════════════════════════════════════════
+
+// ── 1. CANCELAR SELECTOR ──────────────────────────────────────
+function cancelarSelector() {
+  document.getElementById('selector-screen').style.display = 'none';
+  if (obraSeleccionada) {
+    document.getElementById('main-screen').style.display = 'block';
+  }
+}
+
+// Mostrar/ocultar btn cancelar según si hay obra activa
+var _mostrarSelectorOrigV12 = mostrarSelector;
+mostrarSelector = function(email, obras) {
+  _mostrarSelectorOrigV12(email, obras);
+  var btnCancel = document.getElementById('btn-cancelar-selector');
+  if (btnCancel) btnCancel.style.display = obraSeleccionada ? 'inline-block' : 'none';
+};
+
+// ── 2. REFRESCAR OBRAS EN MEMORIA TRAS addObra ────────────────
+function refrescarObrasPermitidas() {
+  if (!userEmail) return;
+  fetch(API_URL + '?action=obras&email=' + encodeURIComponent(userEmail))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.obras) {
+        obrasPermitidas = data.obras;
+        var show = obrasPermitidas.length > 1;
+        var btnC  = document.getElementById('btn-cambiar-obra');
+        var btnCM = document.getElementById('btn-cambiar-obra-mobile');
+        if (btnC)  btnC.style.display  = show ? 'inline-block' : 'none';
+        if (btnCM) btnCM.style.display = show ? 'inline-block' : 'none';
+      }
+    }).catch(function(){});
+}
+
+// Override guardarObra para post-proceso tras add/edit
+var _guardarObraOrigV12 = guardarObra;
+guardarObra = function() {
+  var eraAdd = !editandoObra;
+  var idEditando  = editandoObra ? editandoObra.id : null;
+  var latNueva = parseFloat(document.getElementById('obra-f-lat').value);
+  var lonNueva = parseFloat(document.getElementById('obra-f-lon').value);
+
+  var origFetch = window.fetch;
+  window.fetch = function(url, opts) {
+    return origFetch(url, opts).then(function(r) {
+      var clone = r.clone();
+      clone.json().then(function(data) {
+        if (data.ok) {
+          if (eraAdd) {
+            refrescarObrasPermitidas();
+          } else if (idEditando && obraSeleccionada && idEditando === obraSeleccionada.id) {
+            if (!isNaN(latNueva) && !isNaN(lonNueva)) {
+              actualizarMapaOSM(latNueva, lonNueva);
+            }
+          }
+        }
+      }).catch(function(){});
+      window.fetch = origFetch;
+      return r;
+    }).catch(function(e) {
+      window.fetch = origFetch;
+      throw e;
+    });
+  };
+  _guardarObraOrigV12();
+};
+
+// ── 3. ACTUALIZAR MAPA OSM ────────────────────────────────────
+function actualizarMapaOSM(lat, lon) {
+  var mapCol = document.getElementById('map-col');
+  if (!mapCol) return;
+  var zoom = 14, n = Math.pow(2, zoom);
+  var xtile = Math.floor((lon + 180) / 360 * n);
+  var ytile  = Math.floor((1 - Math.log(Math.tan(lat * Math.PI/180) + 1/Math.cos(lat * Math.PI/180)) / Math.PI) / 2 * n);
+  var img = document.getElementById('osm-map');
+  if (img) img.src = 'https://tile.openstreetmap.org/' + zoom + '/' + xtile + '/' + ytile + '.png';
+}
+
+// ── 4. EXPORTAR XLSX ──────────────────────────────────────────
+function abrirExportar() {
+  if (!obraSeleccionada || !globalAnual || !globalAnual.length) return;
+  var minFecha = globalAnual[0].fecha;
+  var maxFecha = globalAnual[globalAnual.length - 1].fecha;
+  document.getElementById('export-obra-label').textContent =
+    'Obra ' + obraSeleccionada.id + ' — ' + obraSeleccionada.descripcion;
+  document.getElementById('export-desde').value = minFecha;
+  document.getElementById('export-hasta').value  = maxFecha;
+  document.getElementById('export-desde').min    = minFecha;
+  document.getElementById('export-desde').max    = maxFecha;
+  document.getElementById('export-hasta').min    = minFecha;
+  document.getElementById('export-hasta').max    = maxFecha;
+  document.getElementById('export-rango-info').textContent =
+    'Registros disponibles: ' + formatFechaLarga(minFecha) + ' → ' + formatFechaLarga(maxFecha);
+  document.getElementById('export-msg').textContent = '';
+  var btn = document.getElementById('btn-export-ok');
+  btn.disabled = false;
+  btn.textContent = 'Descargar XLSX';
+  document.getElementById('export-overlay').style.display = 'flex';
+}
+
+function cerrarExportar() {
+  document.getElementById('export-overlay').style.display = 'none';
+}
+
+function ejecutarExportar() {
+  var desde = document.getElementById('export-desde').value;
+  var hasta  = document.getElementById('export-hasta').value;
+  if (!desde || !hasta) { mostrarExportMsg('Selecciona fechas de inicio y fin.', false); return; }
+  if (desde > hasta)    { mostrarExportMsg('La fecha inicio debe ser anterior al fin.', false); return; }
+
+  var btn = document.getElementById('btn-export-ok');
+  btn.disabled = true;
+  btn.textContent = 'Descargando...';
+  mostrarExportMsg('Consultando registros...', null);
+
+  var url = API_URL +
+    '?action=exportData&email=' + encodeURIComponent(userEmail) +
+    '&obraId='     + encodeURIComponent(obraSeleccionada.id) +
+    '&fechaDesde=' + encodeURIComponent(desde) +
+    '&fechaHasta=' + encodeURIComponent(hasta);
+
+  fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      btn.disabled = false;
+      btn.textContent = 'Descargar XLSX';
+      if (!data.ok || !data.rows) {
+        mostrarExportMsg('Error: ' + (data.error || 'respuesta invalida'), false); return;
+      }
+      if (!data.rows.length) {
+        mostrarExportMsg('Sin registros en el rango seleccionado.', false); return;
+      }
+      generarXLSX(data.headers, data.rows, obraSeleccionada);
+      mostrarExportMsg('\u2713 ' + data.rows.length + ' registros exportados.', true);
+    })
+    .catch(function(err) {
+      btn.disabled = false;
+      btn.textContent = 'Descargar XLSX';
+      mostrarExportMsg('Error de conexion: ' + err.message, false);
+    });
+}
+
+function generarXLSX(headers, rows, obra) {
+  var wb = XLSX.utils.book_new();
+  var ws = XLSX.utils.aoa_to_sheet([headers].concat(rows));
+  ws['!cols'] = [
+    {wch:8},{wch:28},{wch:18},{wch:12},{wch:8},
+    {wch:12},{wch:12},{wch:14},{wch:16},{wch:16},
+    {wch:12},{wch:14},{wch:22},{wch:10}
+  ];
+  XLSX.utils.book_append_sheet(wb, ws, 'Registros');
+  // Nombre: obra_descripcion + timestamp
+  var now = new Date();
+  var ts  = now.getFullYear() + pad2(now.getMonth()+1) + pad2(now.getDate()) +
+            '_' + pad2(now.getHours()) + pad2(now.getMinutes());
+  var descLimpia = obra.descripcion.replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ _-]/g, '').trim().replace(/\s+/g,'-');
+  var filename = 'ClimaObra_' + obra.id + '_' + descLimpia + '_' + ts + '.xlsx';
+  XLSX.writeFile(wb, filename);
+}
+
+function mostrarExportMsg(msg, ok) {
+  var el = document.getElementById('export-msg');
+  el.style.color = ok === true ? '#15803d' : ok === false ? '#b91c1c' : '#888';
+  el.textContent = msg;
+}
+
+// ── 5. VERSIÓN EN HEADER DESKTOP ─────────────────────────────
+function actualizarVersionDesktop(gasVersion) {
+  var el = document.getElementById('desktop-version');
+  if (el) el.textContent = VERSION_UI + ' · GAS ' + (gasVersion || '');
+}
+
+// ── MOSTRAR BTN EXPORTAR SOLO DESKTOP ────────────────────────
+function actualizarBtnExportar() {
+  var btn = document.getElementById('btn-exportar');
+  if (!btn) return;
+  btn.style.display = (window.innerWidth > 768 && globalAnual && globalAnual.length) ? 'inline-block' : 'none';
+}
+window.addEventListener('resize', actualizarBtnExportar);
+
+</script>
 
 <!-- ── MODAL EXPORTAR XLSX ─────────────────────────────────── -->
 <div id="export-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:2000;align-items:center;justify-content:center;">
@@ -1743,217 +1926,4 @@ if ('serviceWorker' in navigator) {
   </div>
 </div>
 </body>
-
-// ═══════════════════════════════════════════════════════════════
-//  v12.0 — NUEVAS FUNCIONES
-// ═══════════════════════════════════════════════════════════════
-
-// ── 1. CANCELAR SELECTOR ──────────────────────────────────────
-function cancelarSelector() {
-  // Solo disponible si ya hay obra activa
-  document.getElementById('selector-screen').style.display = 'none';
-  if (obraSeleccionada) {
-    document.getElementById('main-screen').style.display = 'block';
-  }
-}
-
-// ── mostrarSelector v12: muestra/oculta botón Cancelar ────────
-// Override de la función original para agregar lógica de cancelar
-var _mostrarSelectorOrig = mostrarSelector;
-mostrarSelector = function(email, obras) {
-  _mostrarSelectorOrig(email, obras);
-  var btnCancel = document.getElementById('btn-cancelar-selector');
-  if (btnCancel) {
-    btnCancel.style.display = obraSeleccionada ? 'block' : 'none';
-  }
-};
-
-// ── 2. REFRESH DE OBRAS EN MEMORIA TRAS addObra ───────────────
-// Override de guardarObra para refrescar obrasPermitidas tras add
-var _guardarObraOrig = guardarObra;
-guardarObra = function() {
-  // Capturar si era nueva obra antes de llamar al original
-  var eraAdd = !editandoObra;
-  var obraIdEditando = editandoObra ? editandoObra.id : null;
-  var latEdit = editandoObra ? parseFloat(document.getElementById('obra-f-lat').value) : null;
-  var lonEdit = editandoObra ? parseFloat(document.getElementById('obra-f-lon').value) : null;
-
-  // Parchear fetch para interceptar resultado
-  var origFetch = window.fetch;
-  window.fetch = function(url, opts) {
-    return origFetch(url, opts).then(function(r) {
-      return r.clone().json().then(function(data) {
-        if (data.ok) {
-          if (eraAdd) {
-            // Refrescar obras permitidas del usuario
-            refrescarObrasPermitidas();
-          } else if (obraIdEditando && obraSeleccionada && obraIdEditando === obraSeleccionada.id) {
-            // Actualizar mapa si se editó la obra actual
-            if (!isNaN(latEdit) && !isNaN(lonEdit)) {
-              actualizarMapaOSM(latEdit, lonEdit);
-            }
-          }
-        }
-        window.fetch = origFetch;
-        return r;
-      }).catch(function() {
-        window.fetch = origFetch;
-        return r;
-      });
-    });
-  };
-  _guardarObraOrig();
-};
-
-function refrescarObrasPermitidas() {
-  if (!userEmail) return;
-  fetch(API_URL + '?action=obras&email=' + encodeURIComponent(userEmail))
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data.obras) {
-        obrasPermitidas = data.obras;
-        // Mostrar/ocultar btn cambiar obra según cantidad
-        var btnCambiar  = document.getElementById('btn-cambiar-obra');
-        var btnCambiarM = document.getElementById('btn-cambiar-obra-mobile');
-        var show = obrasPermitidas.length > 1;
-        if (btnCambiar)  btnCambiar.style.display  = show ? '' : 'none';
-        if (btnCambiarM) btnCambiarM.style.display = show ? '' : 'none';
-      }
-    })
-    .catch(function() {});
-}
-
-// ── 3. ACTUALIZAR MAPA OSM ────────────────────────────────────
-function actualizarMapaOSM(lat, lon) {
-  var mapCol = document.getElementById('map-col');
-  if (!mapCol) return;
-  var mapW = mapCol.offsetWidth  || 220;
-  var mapH = mapCol.offsetHeight || 160;
-  var zoom = 14, n = Math.pow(2, zoom);
-  var xtile = Math.floor((lon + 180) / 360 * n);
-  var ytile  = Math.floor((1 - Math.log(Math.tan(lat * Math.PI/180) + 1/Math.cos(lat * Math.PI/180)) / Math.PI) / 2 * n);
-  var osmImg = document.getElementById('osm-map');
-  if (osmImg) osmImg.src = 'https://tile.openstreetmap.org/' + zoom + '/' + xtile + '/' + ytile + '.png';
-}
-
-// ── 4. EXPORTAR XLSX ──────────────────────────────────────────
-var exportFechaMin = '';
-var exportFechaMax = '';
-
-function abrirExportar() {
-  if (!obraSeleccionada || !globalAnual || !globalAnual.length) return;
-  // Rango disponible en los datos actuales
-  exportFechaMin = globalAnual[0].fecha;
-  exportFechaMax = globalAnual[globalAnual.length - 1].fecha;
-
-  document.getElementById('export-obra-label').textContent =
-    'Obra ' + obraSeleccionada.id + ' — ' + obraSeleccionada.descripcion;
-  document.getElementById('export-desde').value = exportFechaMin;
-  document.getElementById('export-hasta').value  = exportFechaMax;
-  document.getElementById('export-desde').min    = exportFechaMin;
-  document.getElementById('export-desde').max    = exportFechaMax;
-  document.getElementById('export-hasta').min    = exportFechaMin;
-  document.getElementById('export-hasta').max    = exportFechaMax;
-  document.getElementById('export-rango-info').textContent =
-    'Registros disponibles: ' + formatFechaLarga(exportFechaMin) + ' → ' + formatFechaLarga(exportFechaMax);
-  document.getElementById('export-msg').textContent = '';
-  document.getElementById('btn-export-ok').disabled = false;
-  document.getElementById('btn-export-ok').textContent = 'Descargar XLSX';
-  document.getElementById('export-overlay').style.display = 'flex';
-}
-
-function cerrarExportar() {
-  document.getElementById('export-overlay').style.display = 'none';
-}
-
-function ejecutarExportar() {
-  var desde = document.getElementById('export-desde').value;
-  var hasta  = document.getElementById('export-hasta').value;
-  if (!desde || !hasta) {
-    mostrarExportMsg('Seleccioná fecha de inicio y fin.', false); return;
-  }
-  if (desde > hasta) {
-    mostrarExportMsg('La fecha de inicio debe ser anterior al fin.', false); return;
-  }
-  var btn = document.getElementById('btn-export-ok');
-  btn.disabled = true;
-  btn.textContent = 'Descargando...';
-  mostrarExportMsg('Consultando registros...', null);
-
-  var url = API_URL +
-    '?action=exportData' +
-    '&email='      + encodeURIComponent(userEmail) +
-    '&obraId='     + encodeURIComponent(obraSeleccionada.id) +
-    '&fechaDesde=' + encodeURIComponent(desde) +
-    '&fechaHasta=' + encodeURIComponent(hasta);
-
-  fetch(url)
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      btn.disabled = false;
-      btn.textContent = 'Descargar XLSX';
-      if (!data.ok || !data.rows) {
-        mostrarExportMsg('Error al obtener datos: ' + (data.error || 'respuesta inválida'), false);
-        return;
-      }
-      if (!data.rows.length) {
-        mostrarExportMsg('No hay registros en el rango seleccionado.', false);
-        return;
-      }
-      generarXLSX(data.headers, data.rows, obraSeleccionada, desde, hasta);
-      mostrarExportMsg('✓ ' + data.rows.length + ' registros exportados.', true);
-    })
-    .catch(function(err) {
-      btn.disabled = false;
-      btn.textContent = 'Descargar XLSX';
-      mostrarExportMsg('Error de conexión: ' + err.message, false);
-    });
-}
-
-function generarXLSX(headers, rows, obra, desde, hasta) {
-  var wb = XLSX.utils.book_new();
-
-  // Hoja de datos
-  var wsData = [headers].concat(rows);
-  var ws = XLSX.utils.aoa_to_sheet(wsData);
-
-  // Ancho de columnas
-  ws['!cols'] = [
-    {wch:8},{wch:28},{wch:18},{wch:12},{wch:8},
-    {wch:12},{wch:12},{wch:14},{wch:16},{wch:16},
-    {wch:12},{wch:14},{wch:22},{wch:10}
-  ];
-
-  XLSX.utils.book_append_sheet(wb, ws, 'Registros');
-
-  // Nombre de archivo
-  var dsd = desde.replace(/-/g,'');
-  var hst = hasta.replace(/-/g,'');
-  var filename = 'ClimaObra_' + obra.id + '_' + dsd + '_' + hst + '.xlsx';
-
-  XLSX.writeFile(wb, filename);
-}
-
-function mostrarExportMsg(msg, ok) {
-  var el = document.getElementById('export-msg');
-  el.style.color = ok === true ? '#15803d' : ok === false ? '#b91c1c' : '#888';
-  el.textContent = msg;
-}
-
-// ── 5. VERSIÓN EN HEADER DESKTOP ─────────────────────────────
-// Se actualiza en renderDashboard cuando llegan los datos del GAS
-function actualizarVersionDesktop(gasVersion) {
-  var el = document.getElementById('desktop-version');
-  if (el) el.textContent = VERSION_UI + ' · GAS ' + (gasVersion || '');
-}
-
-// ── MOSTRAR BOTÓN EXPORTAR SOLO EN DESKTOP ───────────────────
-function actualizarBtnExportar() {
-  var btn = document.getElementById('btn-exportar');
-  if (!btn) return;
-  // Solo desktop (ancho > 768px) y con datos cargados
-  btn.style.display = (window.innerWidth > 768 && globalAnual && globalAnual.length) ? 'inline-block' : 'none';
-}
-window.addEventListener('resize', actualizarBtnExportar);
-
-</script>
+</html>
