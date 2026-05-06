@@ -461,7 +461,7 @@
     <div class="login-logo">&#127959; ClimaObra</div>
     <div class="login-sub">Sistema de registro climatico para obra</div>
     <div id="g-btn-wrap"></div>
-    <div class="login-ver">v12.4</div>
+    <div class="login-ver">v12.5</div>
   </div>
 </div>
 
@@ -813,7 +813,7 @@
 // ── CONFIGURACION ─────────────────────────────────────────────
 var CLIENT_ID   = '985022387906-5h3qtmq6jifdl5jdv77o4amf9nb3mcdn.apps.googleusercontent.com';
 var API_URL     = 'https://script.google.com/macros/s/AKfycbzH5slzkOQ8fvhCt9JXIoMFNxrBZghZv34fowPI2Yk948eTxhZmHFX37InwpnxmkVBU/exec';
-var VERSION_UI  = 'v12.4';
+var VERSION_UI  = 'v12.5';
 // ─────────────────────────────────────────────────────────────
 
 var chart7Instance      = null;
@@ -1053,6 +1053,21 @@ function iniciarDashboard(data) {
   mostrarApp();
   var obra = data.obra;
   globalObra = obra; window._obraActual = obra;
+  // Pre-fetch del mapa OSM como base64 para usarlo en el PDF sin CORS
+  _mapaBase64 = null;
+  (function() {
+    var lat = obra.latitud, lon = obra.longitud;
+    var url = 'https://staticmap.openstreetmap.de/staticmap.php?center=' + lat + ',' + lon +
+              '&zoom=15&size=155x116&markers=' + lat + ',' + lon + ',red-pushpin';
+    fetch(url)
+      .then(function(r) { return r.blob(); })
+      .then(function(blob) {
+        var reader = new FileReader();
+        reader.onloadend = function() { _mapaBase64 = reader.result; };
+        reader.readAsDataURL(blob);
+      })
+      .catch(function() { _mapaBase64 = null; });
+  })();
   globalAnual         = data.anual;
   tipoActualizacion   = 'manual';
   ultimaActualizacion = new Date();
@@ -1960,6 +1975,7 @@ window.addEventListener('resize', actualizarBtnExportar);
 //  INFORME PDF — v12.2
 // ──────────────────────────────────────────────────────
 var _mesesDisponibles = [];
+var _mapaBase64 = null;
 
 var MESES_NOMBRES = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio',
                      'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -2294,7 +2310,7 @@ function construirHTMLInforme(obra, ma, mant, periodo, anio, mes) {
         '</div>' +
       '</div>' +
       '<div style="width:155px;flex-shrink:0;border-radius:5px;overflow:hidden;border:0.5px solid #E0DED6;background:#f0f0f0;">' +
-        generarMapaSVG(lat, lon) +
+        (_mapaBase64 ? '<img src="' + _mapaBase64 + '" width="155" height="116" style="display:block;"/>' : generarMapaSVG(lat, lon)) +
       '</div>' +
     '</div>' +
 
@@ -2334,7 +2350,7 @@ function construirHTMLInforme(obra, ma, mant, periodo, anio, mes) {
     // FOOTER
     '<div style="border-top:0.5px solid #E0E0D8;padding-top:8px;display:flex;justify-content:space-between;align-items:center;margin-top:auto;">' +
       '<div style="font-size:7.5px;color:#aaa;">Generado por ClimaObra \u00b7 datamegashare.github.io/climaobra \u00b7 ' + tsGen + '</div>' +
-      '<div style="font-size:7.5px;color:#E87722;">v12.4</div>' +
+      '<div style="font-size:7.5px;color:#E87722;">v12.5</div>' +
     '</div>' +
 
     '</div>'
