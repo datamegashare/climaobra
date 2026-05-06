@@ -461,7 +461,7 @@
     <div class="login-logo">&#127959; ClimaObra</div>
     <div class="login-sub">Sistema de registro climatico para obra</div>
     <div id="g-btn-wrap"></div>
-    <div class="login-ver">v12.5</div>
+    <div class="login-ver">v12.6</div>
   </div>
 </div>
 
@@ -813,7 +813,7 @@
 // ── CONFIGURACION ─────────────────────────────────────────────
 var CLIENT_ID   = '985022387906-5h3qtmq6jifdl5jdv77o4amf9nb3mcdn.apps.googleusercontent.com';
 var API_URL     = 'https://script.google.com/macros/s/AKfycbzH5slzkOQ8fvhCt9JXIoMFNxrBZghZv34fowPI2Yk948eTxhZmHFX37InwpnxmkVBU/exec';
-var VERSION_UI  = 'v12.5';
+var VERSION_UI  = 'v12.6';
 // ─────────────────────────────────────────────────────────────
 
 var chart7Instance      = null;
@@ -1053,20 +1053,62 @@ function iniciarDashboard(data) {
   mostrarApp();
   var obra = data.obra;
   globalObra = obra; window._obraActual = obra;
-  // Pre-fetch del mapa OSM como base64 para usarlo en el PDF sin CORS
+  // Pre-cargar mapa OSM en canvas usando tiles (CORS abierto en tile.openstreetmap.org)
   _mapaBase64 = null;
   (function() {
-    var lat = obra.latitud, lon = obra.longitud;
-    var url = 'https://staticmap.openstreetmap.de/staticmap.php?center=' + lat + ',' + lon +
-              '&zoom=15&size=155x116&markers=' + lat + ',' + lon + ',red-pushpin';
-    fetch(url)
-      .then(function(r) { return r.blob(); })
-      .then(function(blob) {
-        var reader = new FileReader();
-        reader.onloadend = function() { _mapaBase64 = reader.result; };
-        reader.readAsDataURL(blob);
-      })
-      .catch(function() { _mapaBase64 = null; });
+    var lat  = parseFloat(obra.latitud);
+    var lon  = parseFloat(obra.longitud);
+    var zoom = 15;
+    var W = 155, H = 116;
+
+    function lon2tile(l,z){ return Math.floor((l+180)/360*Math.pow(2,z)); }
+    function lat2tile(l,z){ return Math.floor((1-Math.log(Math.tan(l*Math.PI/180)+1/Math.cos(l*Math.PI/180))/Math.PI)/2*Math.pow(2,z)); }
+    function lon2pix(l,z,tx){ return Math.floor(((l+180)/360*Math.pow(2,z)-tx)*256); }
+    function lat2pix(l,z,ty){ return Math.floor(((1-Math.log(Math.tan(l*Math.PI/180)+1/Math.cos(l*Math.PI/180))/Math.PI)/2*Math.pow(2,z)-ty)*256); }
+
+    var tx = lon2tile(lon,zoom), ty = lat2tile(lat,zoom);
+    var px = lon2pix(lon,zoom,tx), py = lat2pix(lat,zoom,ty);
+    var offX = Math.floor(W/2)-px, offY = Math.floor(H/2)-py;
+
+    var cv  = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    var ctx = cv.getContext('2d');
+    ctx.fillStyle = '#e8e0d4';
+    ctx.fillRect(0,0,W,H);
+
+    var tiles = [];
+    for(var dy=-1;dy<=1;dy++) for(var dx=-1;dx<=1;dx++) tiles.push({tx:tx+dx,ty:ty+dy,dx:dx,dy:dy});
+
+    var loaded=0, total=tiles.length;
+
+    function drawPin() {
+      var cx=W/2, cy=H/2-4;
+      // Halo
+      ctx.beginPath(); ctx.arc(cx,cy+4,11,0,Math.PI*2);
+      ctx.fillStyle='rgba(232,119,34,0.2)'; ctx.fill();
+      // Gota
+      ctx.beginPath();
+      ctx.moveTo(cx, cy+10);
+      ctx.bezierCurveTo(cx+9,cy+2, cx+9,cy-10, cx,cy-14);
+      ctx.bezierCurveTo(cx-9,cy-10, cx-9,cy+2, cx,cy+10);
+      ctx.fillStyle='#E87722'; ctx.fill();
+      ctx.strokeStyle='#b85a10'; ctx.lineWidth=1; ctx.stroke();
+      // Punto blanco
+      ctx.beginPath(); ctx.arc(cx,cy-4,3.5,0,Math.PI*2);
+      ctx.fillStyle='#fff'; ctx.fill();
+      _mapaBase64 = cv.toDataURL('image/png');
+    }
+
+    tiles.forEach(function(t){
+      var img=new Image();
+      img.crossOrigin='anonymous';
+      img.src='https://tile.openstreetmap.org/'+zoom+'/'+t.tx+'/'+t.ty+'.png';
+      img.onload=function(){
+        ctx.drawImage(img, offX+t.dx*256, offY+t.dy*256, 256, 256);
+        if(++loaded===total) drawPin();
+      };
+      img.onerror=function(){ if(++loaded===total) drawPin(); };
+    });
   })();
   globalAnual         = data.anual;
   tipoActualizacion   = 'manual';
@@ -2350,7 +2392,7 @@ function construirHTMLInforme(obra, ma, mant, periodo, anio, mes) {
     // FOOTER
     '<div style="border-top:0.5px solid #E0E0D8;padding-top:8px;display:flex;justify-content:space-between;align-items:center;margin-top:auto;">' +
       '<div style="font-size:7.5px;color:#aaa;">Generado por ClimaObra \u00b7 datamegashare.github.io/climaobra \u00b7 ' + tsGen + '</div>' +
-      '<div style="font-size:7.5px;color:#E87722;">v12.5</div>' +
+      '<div style="font-size:7.5px;color:#E87722;">v12.6</div>' +
     '</div>' +
 
     '</div>'
