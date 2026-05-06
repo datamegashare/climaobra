@@ -461,7 +461,7 @@
     <div class="login-logo">&#127959; ClimaObra</div>
     <div class="login-sub">Sistema de registro climatico para obra</div>
     <div id="g-btn-wrap"></div>
-    <div class="login-ver">v12.3</div>
+    <div class="login-ver">v12.4</div>
   </div>
 </div>
 
@@ -813,7 +813,7 @@
 // ── CONFIGURACION ─────────────────────────────────────────────
 var CLIENT_ID   = '985022387906-5h3qtmq6jifdl5jdv77o4amf9nb3mcdn.apps.googleusercontent.com';
 var API_URL     = 'https://script.google.com/macros/s/AKfycbzH5slzkOQ8fvhCt9JXIoMFNxrBZghZv34fowPI2Yk948eTxhZmHFX37InwpnxmkVBU/exec';
-var VERSION_UI  = 'v12.3';
+var VERSION_UI  = 'v12.4';
 // ─────────────────────────────────────────────────────────────
 
 var chart7Instance      = null;
@@ -2012,6 +2012,14 @@ function abrirInformePDF() {
 function cerrarInformePDF() {
   document.getElementById('overlay-informe-pdf').style.display = 'none';
   document.getElementById('pdf-render-container').innerHTML = '';
+  // Reset completo del estado del modal para que funcione al re-abrir
+  var sel   = document.getElementById('pdf-mes-select');
+  var btnOk = document.getElementById('btn-pdf-ok');
+  var btnCx = document.getElementById('btn-pdf-cancel');
+  if (sel)   { sel.innerHTML = ''; sel.disabled = true; }
+  if (btnOk) { btnOk.disabled = true; btnOk.textContent = 'Generar PDF'; }
+  if (btnCx) { btnCx.disabled = false; }
+  document.getElementById('pdf-msg').textContent = '';
 }
 
 function generarInformePDF() {
@@ -2148,56 +2156,53 @@ function renderizarGrafico(ma, cb) {
 }
 
 function generarMapaSVG(lat, lon) {
-  // Mapa estático SVG con estilo cartográfico — sin CORS, siempre funciona
-  var latF  = parseFloat(lat).toFixed(4);
-  var lonF  = parseFloat(lon).toFixed(4);
-  // Paleta tipo OSM light
-  var svg = [
-    '<svg width="155" height="116" viewBox="0 0 155 116" xmlns="http://www.w3.org/2000/svg" style="display:block;">',
-    // Fondo base (tierra/ciudad)
-    '<rect width="155" height="116" fill="#f2efe9"/>',
-    // Cuadrícula de manzanas simulada
-    '<rect x="0"   y="0"   width="155" height="116" fill="#e8e0d0" opacity="0.4"/>',
-    // Calles principales horizontales
-    '<rect x="0"  y="28"  width="155" height="5"  fill="#fff" opacity="0.9"/>',
-    '<rect x="0"  y="55"  width="155" height="7"  fill="#fff" opacity="0.9"/>',
-    '<rect x="0"  y="85"  width="155" height="5"  fill="#fff" opacity="0.9"/>',
-    // Calles principales verticales
-    '<rect x="32"  y="0"  width="5"  height="116" fill="#fff" opacity="0.9"/>',
-    '<rect x="72"  y="0"  width="7"  height="116" fill="#fff" opacity="0.9"/>',
-    '<rect x="115" y="0"  width="5"  height="116" fill="#fff" opacity="0.9"/>',
-    // Manzanas (bloques)
-    '<rect x="6"   y="6"   width="22" height="18" rx="1" fill="#ddd8cc"/>',
-    '<rect x="6"   y="34"  width="22" height="17" rx="1" fill="#ddd8cc"/>',
-    '<rect x="6"   y="63"  width="22" height="18" rx="1" fill="#ddd8cc"/>',
-    '<rect x="6"   y="92"  width="22" height="18" rx="1" fill="#ddd8cc"/>',
-    '<rect x="40"  y="6"   width="28" height="18" rx="1" fill="#ddd8cc"/>',
-    '<rect x="40"  y="34"  width="28" height="17" rx="1" fill="#ddd8cc"/>',
-    '<rect x="40"  y="63"  width="28" height="18" rx="1" fill="#ddd8cc"/>',
-    '<rect x="40"  y="92"  width="28" height="18" rx="1" fill="#ddd8cc"/>',
-    '<rect x="82"  y="6"   width="28" height="18" rx="1" fill="#ddd8cc"/>',
-    '<rect x="82"  y="34"  width="28" height="17" rx="1" fill="#ddd8cc"/>',
-    '<rect x="82"  y="63"  width="28" height="18" rx="1" fill="#ddd8cc"/>',
-    '<rect x="82"  y="92"  width="28" height="18" rx="1" fill="#ddd8cc"/>',
-    '<rect x="123" y="6"   width="26" height="18" rx="1" fill="#ddd8cc"/>',
-    '<rect x="123" y="34"  width="26" height="17" rx="1" fill="#ddd8cc"/>',
-    '<rect x="123" y="63"  width="26" height="18" rx="1" fill="#ddd8cc"/>',
-    '<rect x="123" y="92"  width="26" height="18" rx="1" fill="#ddd8cc"/>',
-    // Pin de ubicación centrado
-    '<circle cx="77" cy="54" r="14" fill="rgba(232,119,34,0.18)"/>',
-    '<circle cx="77" cy="54" r="8"  fill="rgba(232,119,34,0.35)"/>',
-    '<path d="M77 36 C69 36 63 42 63 50 C63 60 77 72 77 72 C77 72 91 60 91 50 C91 42 85 36 77 36Z" fill="#E87722"/>',
-    '<circle cx="77" cy="50" r="5" fill="#fff"/>',
-    // Borde sutil
-    '<rect width="155" height="116" fill="none" stroke="#c8c0b0" stroke-width="0.5"/>',
-    // Coordenadas en el borde inferior
-    '<rect x="0" y="100" width="155" height="16" fill="rgba(255,255,255,0.82)"/>',
-    '<text x="77" y="111" text-anchor="middle" font-family="Arial" font-size="7.5" fill="#666">',
-    latF + ',  ' + lonF,
-    '</text>',
-    '</svg>'
-  ].join('');
-  return svg;
+  var latF = parseFloat(lat).toFixed(4);
+  var lonF = parseFloat(lon).toFixed(4);
+  // SVG estilo mapa minimalista — sin CORS, siempre funciona en html2canvas
+  var s = [];
+  s.push('<svg width="155" height="116" viewBox="0 0 155 116" xmlns="http://www.w3.org/2000/svg" style="display:block;">');
+  // Fondo agua/ciudad claro
+  s.push('<rect width="155" height="116" fill="#e8e0d4"/>');
+  // Avenidas principales (más anchas, color crema)
+  s.push('<rect x="0"   y="52"  width="155" height="9"  fill="#fff9f0"/>');
+  s.push('<rect x="0"   y="31"  width="155" height="5"  fill="#fff9f0"/>');
+  s.push('<rect x="0"   y="78"  width="155" height="5"  fill="#fff9f0"/>');
+  s.push('<rect x="68"  y="0"   width="9"   height="116" fill="#fff9f0"/>');
+  s.push('<rect x="38"  y="0"   width="5"   height="116" fill="#fff9f0"/>');
+  s.push('<rect x="112" y="0"   width="5"   height="116" fill="#fff9f0"/>');
+  // Manzanas — filas y columnas
+  var manzanaColor = '#d6cfc4';
+  var manzanas = [
+    // fila 1 (y=4..27)
+    [4,4,30,24],[45,4,19,24],[81,4,27,24],[120,4,30,24],
+    // fila 2 (y=36..48)
+    [4,36,30,12],[45,36,19,12],[81,36,27,12],[120,36,30,12],
+    // fila 3 (y=61..74)
+    [4,61,30,13],[45,61,19,13],[81,61,27,13],[120,61,30,13],
+    // fila 4 (y=83..110)
+    [4,83,30,27],[45,83,19,27],[81,83,27,27],[120,83,30,27]
+  ];
+  manzanas.forEach(function(m){
+    s.push('<rect x="'+m[0]+'" y="'+m[1]+'" width="'+m[2]+'" height="'+m[3]+'" rx="1" fill="'+manzanaColor+'"/>');
+  });
+  // Sombra del pin
+  s.push('<ellipse cx="77" cy="66" rx="7" ry="3" fill="rgba(0,0,0,0.15)"/>');
+  // Halo exterior
+  s.push('<circle cx="77" cy="55" r="16" fill="rgba(232,119,34,0.15)"/>');
+  s.push('<circle cx="77" cy="55" r="10" fill="rgba(232,119,34,0.25)"/>');
+  // Pin — gota
+  s.push('<path d="M77 38 C70 38 64 44 64 52 C64 62 77 72 77 72 C77 72 90 62 90 52 C90 44 84 38 77 38Z" fill="#E87722"/>');
+  s.push('<path d="M77 38 C70 38 64 44 64 52 C64 62 77 72 77 72 C77 72 90 62 90 52 C90 44 84 38 77 38Z" fill="none" stroke="#c45e10" stroke-width="1"/>');
+  // Punto blanco interior
+  s.push('<circle cx="77" cy="51" r="6" fill="#fff"/>');
+  s.push('<circle cx="77" cy="51" r="3" fill="#E87722"/>');
+  // Borde del mapa
+  s.push('<rect width="155" height="116" fill="none" stroke="#b8b0a4" stroke-width="1"/>');
+  // Banda inferior con coordenadas
+  s.push('<rect x="0" y="100" width="155" height="16" fill="rgba(255,255,255,0.88)"/>');
+  s.push('<text x="77" y="111" text-anchor="middle" font-family="Arial,sans-serif" font-size="7.5" fill="#555">' + latF + ',  ' + lonF + '</text>');
+  s.push('</svg>');
+  return s.join('');
 }
 
 function construirHTMLInforme(obra, ma, mant, periodo, anio, mes) {
@@ -2329,7 +2334,7 @@ function construirHTMLInforme(obra, ma, mant, periodo, anio, mes) {
     // FOOTER
     '<div style="border-top:0.5px solid #E0E0D8;padding-top:8px;display:flex;justify-content:space-between;align-items:center;margin-top:auto;">' +
       '<div style="font-size:7.5px;color:#aaa;">Generado por ClimaObra \u00b7 datamegashare.github.io/climaobra \u00b7 ' + tsGen + '</div>' +
-      '<div style="font-size:7.5px;color:#E87722;">v12.3</div>' +
+      '<div style="font-size:7.5px;color:#E87722;">v12.4</div>' +
     '</div>' +
 
     '</div>'
