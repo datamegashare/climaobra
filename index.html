@@ -16,6 +16,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root {
@@ -459,7 +461,7 @@
     <div class="login-logo">&#127959; ClimaObra</div>
     <div class="login-sub">Sistema de registro climatico para obra</div>
     <div id="g-btn-wrap"></div>
-    <div class="login-ver">v12.0</div>
+    <div class="login-ver">v12.1</div>
   </div>
 </div>
 
@@ -547,6 +549,7 @@
               <div class="admin-badge" id="admin-badge" onclick="abrirAdmin()" style="display:none">&#9881; Admin</div>
             </div>
             <span id="desktop-version" style="font-size:0.62rem;color:var(--muted);white-space:nowrap;"></span>
+            <button id="btn-informe-pdf" onclick="abrirInformePDF()" style="display:none;padding:4px 12px;background:transparent;color:var(--accent);border:1.5px solid var(--accent);border-radius:6px;font-size:0.72rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">&#128196; Informe PDF</button>
             <button class="btn-signout" onclick="cerrarSesion()">Cerrar sesion</button>
           </div>
         </div>
@@ -809,7 +812,7 @@
 // ── CONFIGURACION ─────────────────────────────────────────────
 var CLIENT_ID   = '985022387906-5h3qtmq6jifdl5jdv77o4amf9nb3mcdn.apps.googleusercontent.com';
 var API_URL     = 'https://script.google.com/macros/s/AKfycbzH5slzkOQ8fvhCt9JXIoMFNxrBZghZv34fowPI2Yk948eTxhZmHFX37InwpnxmkVBU/exec';
-var VERSION_UI  = 'v12.0';
+var VERSION_UI  = 'v12.1';
 // ─────────────────────────────────────────────────────────────
 
 var chart7Instance      = null;
@@ -1048,7 +1051,7 @@ function iniciarReloj() {
 function iniciarDashboard(data) {
   mostrarApp();
   var obra = data.obra;
-  globalObra          = obra;
+  globalObra = obra; window._obraActual = obra;
   globalAnual         = data.anual;
   tipoActualizacion   = 'manual';
   ultimaActualizacion = new Date();
@@ -1897,6 +1900,7 @@ function actualizarBtnExportar() {
   var btn = document.getElementById('btn-exportar');
   if (!btn) return;
   btn.style.display = (window.innerWidth > 768 && globalAnual && globalAnual.length) ? 'inline-block' : 'none';
+  var btnPdf = document.getElementById('btn-informe-pdf'); if (btnPdf) btnPdf.style.display = btn.style.display;
 }
 window.addEventListener('resize', actualizarBtnExportar);
 
@@ -1927,3 +1931,385 @@ window.addEventListener('resize', actualizarBtnExportar);
 </div>
 </body>
 </html>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL INFORME PDF
+══════════════════════════════════════════════════════ -->
+<div id="overlay-informe-pdf" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2100;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:26px 28px;width:380px;max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,0.18);font-family:'DM Sans',sans-serif;">
+    <div style="font-size:1rem;font-weight:600;color:#1a1a1a;margin-bottom:4px;">&#128196; Informe PDF mensual</div>
+    <div style="font-size:0.75rem;color:#888;margin-bottom:18px;">Seleccioná el mes a exportar</div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:0.75rem;color:#555;display:block;margin-bottom:5px;">Período</label>
+      <select id="pdf-mes-select" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:0.85rem;font-family:'DM Sans',sans-serif;color:#1a1a1a;background:#fff;cursor:pointer;"></select>
+    </div>
+    <div id="pdf-msg" style="font-size:0.75rem;color:#888;margin-bottom:12px;min-height:18px;"></div>
+    <div style="display:flex;gap:8px;">
+      <button id="btn-pdf-ok" onclick="generarInformePDF()" style="flex:1;padding:9px;background:#E87722;color:#fff;border:none;border-radius:7px;font-size:0.82rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Generar PDF</button>
+      <button onclick="cerrarInformePDF()" style="flex:1;padding:9px;background:none;border:1px solid #e2e8f0;border-radius:7px;font-size:0.82rem;color:#888;cursor:pointer;font-family:'DM Sans',sans-serif;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Contenedor oculto donde se renderiza el informe antes de capturar -->
+<div id="pdf-render-container" style="position:fixed;left:-9999px;top:0;width:794px;background:#fff;z-index:-1;"></div>
+
+<script>
+// ──────────────────────────────────────────────────────
+//  INFORME PDF — v12.1
+// ──────────────────────────────────────────────────────
+var _reportCache = null;
+var _mesesDisponibles = [];
+
+var MESES_NOMBRES = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                     'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function abrirInformePDF() {
+  document.getElementById('overlay-informe-pdf').style.display = 'flex';
+  document.getElementById('pdf-msg').textContent = 'Cargando períodos disponibles...';
+  document.getElementById('btn-pdf-ok').disabled = true;
+
+  var obraId = (window._obraActual && window._obraActual.id) || '0000';
+  var email  = localStorage.getItem('co_email') || '';
+
+  fetch(API_URL + '?action=reportData&email=' + encodeURIComponent(email) +
+        '&obraId=' + encodeURIComponent(obraId) + '&anio=2026&mes=4')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (!data.ok) {
+        document.getElementById('pdf-msg').textContent = 'Error: ' + (data.error || 'sin datos');
+        return;
+      }
+      _mesesDisponibles = data.periodo.mesesDisponibles || [];
+      var sel = document.getElementById('pdf-mes-select');
+      sel.innerHTML = '';
+      _mesesDisponibles.slice().reverse().forEach(function(m){
+        var parts = m.split('-');
+        var anio  = parseInt(parts[0]);
+        var mes   = parseInt(parts[1]);
+        var opt   = document.createElement('option');
+        opt.value = m;
+        opt.textContent = MESES_NOMBRES[mes] + ' ' + anio;
+        sel.appendChild(opt);
+      });
+      document.getElementById('pdf-msg').textContent = _mesesDisponibles.length + ' períodos disponibles.';
+      document.getElementById('btn-pdf-ok').disabled = false;
+    })
+    .catch(function(e){
+      document.getElementById('pdf-msg').textContent = 'Error de red: ' + e.message;
+    });
+}
+
+function cerrarInformePDF() {
+  document.getElementById('overlay-informe-pdf').style.display = 'none';
+}
+
+function generarInformePDF() {
+  var sel   = document.getElementById('pdf-mes-select');
+  var valor = sel.value;
+  if (!valor) return;
+  var parts = valor.split('-');
+  var anio  = parseInt(parts[0]);
+  var mes   = parseInt(parts[1]);
+
+  var btn = document.getElementById('btn-pdf-ok');
+  btn.disabled = true;
+  btn.textContent = 'Generando...';
+  document.getElementById('pdf-msg').textContent = 'Consultando datos...';
+
+  var obraId = (window._obraActual && window._obraActual.id) || '0000';
+  var email  = localStorage.getItem('co_email') || '';
+
+  fetch(API_URL + '?action=reportData&email=' + encodeURIComponent(email) +
+        '&obraId=' + encodeURIComponent(obraId) +
+        '&anio=' + anio + '&mes=' + mes)
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (!data.ok || !data.mesActual) {
+        document.getElementById('pdf-msg').textContent = 'Sin datos para ese período.';
+        btn.disabled = false; btn.textContent = 'Generar PDF';
+        return;
+      }
+      document.getElementById('pdf-msg').textContent = 'Renderizando informe...';
+      renderizarYCapturar(data, anio, mes, btn);
+    })
+    .catch(function(e){
+      document.getElementById('pdf-msg').textContent = 'Error: ' + e.message;
+      btn.disabled = false; btn.textContent = 'Generar PDF';
+    });
+}
+
+function renderizarYCapturar(data, anio, mes, btn) {
+  var obra = data.obra;
+  var ma   = data.mesActual;
+  var mant = data.mesAnterior;
+  var periodo = data.periodo;
+
+  // Generar HTML del informe
+  var html = construirHTMLInforme(obra, ma, mant, periodo, anio, mes);
+
+  var container = document.getElementById('pdf-render-container');
+  container.innerHTML = html;
+
+  // Esperar un tick para que Chart.js renderice
+  setTimeout(function(){
+    renderizarGrafico(ma, function(){
+      document.getElementById('pdf-msg').textContent = 'Capturando imagen...';
+      setTimeout(function(){
+        html2canvas(container.firstChild, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          width: 794,
+          windowWidth: 794
+        }).then(function(canvas){
+          var imgData = canvas.toDataURL('image/png');
+          var pdf = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+          pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+          var nombreMes = MESES_NOMBRES[mes].replace(/ /g,'_');
+          pdf.save('ClimaObra_' + obra.id + '_' + obra.descripcion.replace(/ /g,'_') + '_' + nombreMes + '_' + anio + '.pdf');
+          container.innerHTML = '';
+          btn.disabled = false; btn.textContent = 'Generar PDF';
+          document.getElementById('pdf-msg').textContent = '&#10003; PDF descargado.';
+        }).catch(function(e){
+          document.getElementById('pdf-msg').textContent = 'Error al capturar: ' + e.message;
+          btn.disabled = false; btn.textContent = 'Generar PDF';
+        });
+      }, 600);
+    });
+  }, 200);
+}
+
+function renderizarGrafico(ma, cb) {
+  var canvas = document.getElementById('pdf-chart-canvas');
+  if (!canvas) { cb(); return; }
+  var dias   = ma.dias || [];
+  var labels = dias.map(function(d){ return d.fecha.split('-')[2]+'/'+d.fecha.split('-')[1]; });
+  new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        { type: 'line', label: 'T° prom', data: dias.map(function(d){return d.tempProm;}),
+          borderColor:'#E87722', backgroundColor:'transparent', borderWidth:1.5,
+          pointRadius:2, pointBackgroundColor:'#E87722', yAxisID:'yT', tension:0.3, order:1 },
+        { type: 'bar', label: 'Viento máx (km/h)', data: dias.map(function(d){return d.vientoMax;}),
+          backgroundColor:'rgba(55,138,221,0.45)', yAxisID:'yV', order:2 },
+        { type: 'bar', label: 'Lluvia (mm)', data: dias.map(function(d){return d.lluviaTotal;}),
+          backgroundColor:'rgba(226,75,74,0.7)', yAxisID:'yV', order:3 }
+      ]
+    },
+    options: {
+      animation: false, responsive: false,
+      plugins: { legend: { display: true, labels: { font:{size:9}, boxWidth:10, padding:8 } } },
+      scales: {
+        x: { ticks:{font:{size:7.5},maxRotation:45}, grid:{display:false} },
+        yT: { position:'left', ticks:{font:{size:8}}, grid:{color:'rgba(0,0,0,0.05)'},
+              title:{display:true,text:'°C',font:{size:8}} },
+        yV: { position:'right', ticks:{font:{size:8}}, grid:{display:false},
+              title:{display:true,text:'km/h · mm',font:{size:8}} }
+      }
+    }
+  });
+  setTimeout(cb, 300);
+}
+
+function construirHTMLInforme(obra, ma, mant, periodo, anio, mes) {
+  var ahora = new Date();
+  var tsGen = ('0'+ahora.getDate()).slice(-2)+'/'+('0'+(ahora.getMonth()+1)).slice(-2)+'/'+ahora.getFullYear()+
+              ' '+('0'+ahora.getHours()).slice(-2)+':'+('0'+ahora.getMinutes()).slice(-2)+' hs';
+  var nombreMes = MESES_NOMBRES[mes] + ' ' + anio;
+  var mesAntNombre = periodo.nombreAnt || '';
+
+  // Mapa OSM
+  var mapUrl = 'https://staticmap.openstreetmap.de/staticmap.php?center='+obra.latitud+','+obra.longitud+
+               '&zoom=14&size=160x120&markers='+obra.latitud+','+obra.longitud+',red-pushpin';
+
+  // Strip de días del mes actual
+  var diasTotales = ma.diasTotales || 30;
+  var diasMap = {};
+  (ma.dias||[]).forEach(function(d){ diasMap[d.fecha] = d.estado; });
+  var stripHtml = '';
+  for (var i = 1; i <= diasTotales; i++) {
+    var dd    = ('0'+i).slice(-2);
+    var mm    = ('0'+mes).slice(-2);
+    var key   = anio+'-'+mm+'-'+dd;
+    var estado = diasMap[key] || 'sin';
+    var bg    = estado === 'normal' ? '#4CAF7D' : estado === 'perdido' ? '#E24B4A' : '#D0CFC8';
+    stripHtml += '<div style="height:17px;border-radius:2px;background:'+bg+';"></div>';
+  }
+
+  // Barras condiciones
+  var condsHtml = '';
+  (ma.condiciones||[]).forEach(function(c){
+    condsHtml += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">'+
+      '<div style="font-size:9px;color:#555;width:130px;flex-shrink:0;">'+c.nombre+'</div>'+
+      '<div style="flex:1;background:#F0EFE8;border-radius:2px;height:8px;">'+
+        '<div style="height:8px;border-radius:2px;background:#E87722;width:'+c.pct+'%;"></div>'+
+      '</div>'+
+      '<div style="font-size:9px;color:#888;width:30px;text-align:right;">'+c.pct+'%</div>'+
+    '</div>';
+  });
+
+  // Bloque mes anterior
+  var mantHtml = '';
+  if (mant) {
+    mantHtml = '<div style="background:#F8F8F6;border:0.5px solid #E0E0D8;border-radius:6px;padding:10px 14px;margin-top:2px;">'+
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">'+
+        '<div style="font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#aaa;font-weight:500;">Mes anterior — '+mesAntNombre+'</div>'+
+        '<div style="font-size:8px;color:#aaa;">'+mant.diasRegistrados+' días registrados de '+mant.diasTotales+'</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:0;">'+
+        masItem('Días normales', mant.diasNormales, mant.sinRegistro+' sin registro')+
+        masItem('Días perdidos', mant.diasPerdidos, mant.operatividad+'% operatividad', mant.diasPerdidos>0?'#E24B4A':'')+
+        masItem('Temp. máx / mín', mant.tempMax+'°C / '+mant.tempMin+'°C', 'prom. '+mant.tempProm+'°C')+
+        masItem('Viento máx / mín', mant.vientoMax+' / '+mant.vientoMin+' km/h', 'prom. '+mant.vientoProm+' km/h')+
+        masItem('Lluvia máx. día', mant.lluviaMaxDia+' mm', 'acum. '+mant.lluviaAcum+' mm')+
+      '</div>'+
+    '</div>';
+  } else {
+    mantHtml = '<div style="background:#F8F8F6;border:0.5px solid #E0E0D8;border-radius:6px;padding:10px 14px;margin-top:2px;">'+
+      '<div style="font-size:8px;color:#aaa;">Sin datos para el mes anterior</div>'+
+    '</div>';
+  }
+
+  return '<div style="background:#fff;width:794px;min-height:1123px;padding:32px 38px;font-family:Arial,sans-serif;color:#222;display:flex;flex-direction:column;gap:13px;box-sizing:border-box;">'+
+
+    // HEADER
+    '<div style="display:flex;justify-content:space-between;align-items:stretch;border-bottom:2px solid #E87722;padding-bottom:12px;gap:14px;">'+
+      '<div style="flex:1;display:flex;flex-direction:column;gap:8px;">'+
+        '<div style="display:flex;align-items:center;gap:10px;">'+
+          '<div style="width:36px;height:36px;background:#E87722;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+
+            '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="4.5" fill="white"/><path d="M12 2v1.5M12 15v1.5M3 9h1.5M19.5 9H21M5.6 4.6l1 1M17.4 4.6l-1 1" stroke="white" stroke-width="1.5" stroke-linecap="round"/><rect x="4" y="17" width="16" height="4" rx="2" fill="white"/><rect x="7" y="14.5" width="3" height="3" rx="0.5" fill="white"/><rect x="14" y="14.5" width="3" height="3" rx="0.5" fill="white"/></svg>'+
+          '</div>'+
+          '<div>'+
+            '<div style="font-size:18px;font-weight:600;color:#E87722;letter-spacing:.5px;">CLIMAOBRA</div>'+
+            '<div style="font-size:8.5px;color:#888;">Registro climático de obra</div>'+
+          '</div>'+
+          '<div style="margin-left:20px;">'+
+            '<div style="font-size:8px;color:#888;text-transform:uppercase;letter-spacing:1px;">Informe mensual</div>'+
+            '<div style="font-size:14px;font-weight:600;color:#222;">'+nombreMes+'</div>'+
+            '<div style="font-size:8.5px;color:#aaa;">'+ma.diasRegistrados+' días registrados de '+ma.diasTotales+'</div>'+
+          '</div>'+
+        '</div>'+
+        '<div style="background:#FFF4EC;border-left:3px solid #E87722;padding:7px 11px;border-radius:0 4px 4px 0;">'+
+          '<div style="font-size:12px;font-weight:600;color:#333;">'+obra.id+' – '+obra.descripcion+'</div>'+
+          '<div style="font-size:9px;color:#666;margin-top:2px;">Lat '+obra.latitud+' · Lon '+obra.longitud+' · Ventana de registro: '+obra.horaInicio+':00 – '+obra.horaFin+':00 hs</div>'+
+          '<div style="font-size:9px;color:#555;margin-top:1px;">Umbral día perdido: lluvia &gt; '+obra.lluviaDP+' mm &nbsp;<b>o</b>&nbsp; viento &gt; '+obra.vientoDP+' km/h</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="width:160px;flex-shrink:0;border-radius:5px;overflow:hidden;border:0.5px solid #E0DED6;">'+
+        '<img src="'+mapUrl+'" width="160" style="display:block;" alt="Mapa"/>'+
+      '</div>'+
+    '</div>'+
+
+    // KPIs
+    kpiSection(ma)+
+
+    // CRÍTICO
+    criticoSection(ma)+
+
+    // GRÁFICO
+    '<div>'+
+      '<div style="font-size:8px;text-transform:uppercase;letter-spacing:1.2px;color:#E87722;font-weight:500;margin-bottom:5px;">Evolución temperatura y viento — '+nombreMes+'</div>'+
+      '<canvas id="pdf-chart-canvas" width="718" height="140" style="display:block;"></canvas>'+
+    '</div>'+
+
+    // STRIP DÍAS
+    '<div>'+
+      '<div style="font-size:8px;text-transform:uppercase;letter-spacing:1.2px;color:#E87722;font-weight:500;margin-bottom:5px;">Días del mes</div>'+
+      '<div style="display:grid;grid-template-columns:repeat('+diasTotales+',1fr);gap:3px;">'+stripHtml+'</div>'+
+      '<div style="display:flex;gap:14px;margin-top:5px;align-items:center;">'+
+        '<div style="display:flex;align-items:center;gap:5px;font-size:9px;color:#666;"><div style="width:9px;height:9px;border-radius:2px;background:#4CAF7D;flex-shrink:0;"></div>'+ma.diasNormales+' días normales</div>'+
+        '<div style="display:flex;align-items:center;gap:5px;font-size:9px;color:#666;"><div style="width:9px;height:9px;border-radius:2px;background:#E24B4A;flex-shrink:0;"></div>'+ma.diasPerdidos+' días perdidos</div>'+
+        '<div style="display:flex;align-items:center;gap:5px;font-size:9px;color:#666;"><div style="width:9px;height:9px;border-radius:2px;background:#D0CFC8;flex-shrink:0;"></div>'+ma.sinRegistro+' sin registro</div>'+
+        '<div style="margin-left:auto;font-size:9px;color:#aaa;">'+ma.operatividad+'% operatividad</div>'+
+      '</div>'+
+    '</div>'+
+
+    // MES ANTERIOR
+    mantHtml+
+
+    // CONDICIONES
+    '<div>'+
+      '<div style="font-size:8px;text-transform:uppercase;letter-spacing:1.2px;color:#E87722;font-weight:500;margin-bottom:5px;">Distribución de condiciones climáticas</div>'+
+      condsHtml+
+    '</div>'+
+
+    // FOOTER
+    '<div style="border-top:0.5px solid #E0E0D8;padding-top:9px;display:flex;justify-content:space-between;align-items:center;margin-top:auto;">'+
+      '<div style="font-size:8px;color:#aaa;">Generado por ClimaObra · datamegashare.github.io/climaobra · '+tsGen+'</div>'+
+      '<div style="font-size:8px;color:#E87722;">'+VERSION_UI+'</div>'+
+    '</div>'+
+
+  '</div>';
+}
+
+function kpiCard(label, value, unit, accent) {
+  return '<div style="background:#F8F8F6;border:0.5px solid #E0E0D8;border-radius:6px;padding:10px 11px;'+(accent?'border-left:2px solid #E87722;':'')+'">'+
+    '<div style="font-size:8.5px;color:#888;margin-bottom:3px;">'+label+'</div>'+
+    '<div style="font-size:20px;font-weight:600;color:#222;line-height:1;">'+value+'</div>'+
+    '<div style="font-size:8px;color:#aaa;margin-top:2px;">'+unit+'</div>'+
+  '</div>';
+}
+
+function kpiSection(ma) {
+  return '<div>'+
+    '<div style="font-size:8px;text-transform:uppercase;letter-spacing:1.2px;color:#E87722;font-weight:500;margin-bottom:5px;">Condiciones del período</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;">'+
+      kpiCard('Temp. promedio', ma.tempProm, '°C', true)+
+      kpiCard('Temp. máxima', ma.tempMax, '°C · '+ma.tempMaxFecha, false)+
+      kpiCard('Temp. mínima', ma.tempMin, '°C · '+ma.tempMinFecha, false)+
+      kpiCard('Días perdidos', ma.diasPerdidos, 'de '+ma.diasRegistrados+' registrados', false)+
+      kpiCard('Lluvia acumulada', ma.lluviaAcum, 'mm', true)+
+      kpiCard('Días con lluvia', ma.diasConLluvia, 'días', false)+
+      kpiCard('Viento máximo', ma.vientoMax, 'km/h · '+ma.vientoMaxFecha, true)+
+      kpiCard('Viento promedio', ma.vientoProm, 'km/h', false)+
+    '</div>'+
+  '</div>';
+}
+
+function criticoSection(ma) {
+  return '<div>'+
+    '<div style="font-size:8px;text-transform:uppercase;letter-spacing:1.2px;color:#E87722;font-weight:500;margin-bottom:5px;">Condiciones críticas del período</div>'+
+    '<div style="border:1px solid #E87722;border-radius:6px;padding:12px 14px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">'+
+      critItem('temp','Temperatura','Máx. '+ma.tempMax+'°C · Mín. '+ma.tempMin+'°C', ma.tempMaxFecha+' (máx) · '+ma.tempMinFecha+' (mín)')+
+      critItem('wind','Viento','Máx. '+ma.vientoMax+' km/h · Mín. '+ma.vientoMin+' km/h', ma.vientoMaxFecha+' (máx) · Prom. '+ma.vientoProm+' km/h')+
+      critItem('rain','Lluvia','Máx. día: '+ma.lluviaMaxDia+' mm', ma.lluviaMaxFecha+' · Acum. '+ma.lluviaAcum+' mm')+
+    '</div>'+
+  '</div>';
+}
+
+function critItem(tipo, label, val, sub) {
+  var icono = {
+    temp: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2a3 3 0 0 0-3 3v9.18A5 5 0 1 0 15 16V5a3 3 0 0 0-3-3z" stroke="#A34000" stroke-width="1.8" fill="#FEE9D1"/><circle cx="12" cy="17" r="2.5" fill="#A34000"/><line x1="12" y1="7" x2="12" y2="13" stroke="#A34000" stroke-width="1.5" stroke-linecap="round"/></svg>',
+    wind: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 8h11a3 3 0 1 0-3-3" stroke="#1A4F88" stroke-width="1.8" stroke-linecap="round"/><path d="M3 12h14a3 3 0 1 0-3 3" stroke="#1A4F88" stroke-width="1.8" stroke-linecap="round"/><path d="M3 16h8a2 2 0 1 0-2 2" stroke="#1A4F88" stroke-width="1.8" stroke-linecap="round"/></svg>',
+    rain: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2C8 2 4 6 4 10a8 8 0 0 0 16 0c0-4-4-8-8-8z" stroke="#1A6638" stroke-width="1.8" fill="#E3F5EC"/><path d="M8 17l-1 3M12 17l-1 3M16 17l-1 3" stroke="#1A6638" stroke-width="1.5" stroke-linecap="round"/></svg>'
+  }[tipo];
+  var bgIcon = tipo==='temp'?'#FEE9D1':tipo==='wind'?'#E1EEFF':'#E3F5EC';
+  return '<div style="display:flex;align-items:flex-start;gap:9px;">'+
+    '<div style="width:30px;height:30px;flex-shrink:0;border-radius:50%;background:'+bgIcon+';display:flex;align-items:center;justify-content:center;">'+icono+'</div>'+
+    '<div>'+
+      '<div style="font-size:8px;color:#888;text-transform:uppercase;letter-spacing:.8px;">'+label+'</div>'+
+      '<div style="font-size:14px;font-weight:600;color:#222;line-height:1.3;margin:2px 0;">'+val+'</div>'+
+      '<div style="font-size:8px;color:#aaa;">'+sub+'</div>'+
+    '</div>'+
+  '</div>';
+}
+
+function masItem(label, val, sub, color) {
+  return '<div style="flex:1;border-right:0.5px solid #E0E0D8;padding:0 12px;">'+
+    '<div style="font-size:7.5px;color:#aaa;margin-bottom:3px;">'+label+'</div>'+
+    '<div style="font-size:12px;font-weight:500;color:'+(color||'#333')+';">'+val+'</div>'+
+    '<div style="font-size:7.5px;color:#aaa;margin-top:1px;">'+sub+'</div>'+
+  '</div>';
+}
+
+// Mostrar botón PDF cuando hay obra activa
+function mostrarBtnInformePDF(obraActual) {
+  window._obraActual = obraActual;
+  var btn = document.getElementById('btn-informe-pdf');
+  if (btn) btn.style.display = 'inline-block';
+}
+</script>
