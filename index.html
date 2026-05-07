@@ -409,6 +409,33 @@
   .tab-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .tab-btn.active svg { stroke: var(--accent); }
 
+  /* ── TOGGLE FUENTE ───────────────────────────────────────── */
+  .fuente-toggle {
+    display: flex; align-items: center;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 20px; padding: 2px; gap: 0;
+    box-shadow: var(--shadow);
+  }
+  .fuente-btn {
+    padding: 3px 10px; border-radius: 16px;
+    border: none; background: none;
+    color: var(--muted); font-size: 0.62rem; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    white-space: nowrap; transition: all 0.18s; line-height: 1.4;
+  }
+  .fuente-btn.active {
+    background: var(--accent); color: #fff;
+    box-shadow: 0 1px 4px rgba(217,119,6,0.3);
+  }
+  .fuente-btn:not(.active):hover { color: var(--accent); }
+  .fuente-badge {
+    display: inline-block; font-size: 0.55rem; font-weight: 700;
+    padding: 1px 6px; border-radius: 8px; margin-left: 5px;
+    background: #fff0e4; color: var(--accent);
+    vertical-align: middle; white-space: nowrap;
+  }
+  .fuente-badge.om { background: #e4f0ff; color: #1a4088; }
+
   /* PWA install button */
   #btn-install { display: none; padding: 4px 10px; border-radius: 10px; border: 1px solid var(--accent); background: none; color: var(--accent); font-size: 0.62rem; cursor: pointer; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
   #btn-install:hover { background: var(--accent); color: #fff; }
@@ -461,7 +488,7 @@
     <div class="login-logo">&#127959; ClimaObra</div>
     <div class="login-sub">Sistema de registro climatico para obra</div>
     <div id="g-btn-wrap"></div>
-    <div class="login-ver">v13.0</div>
+    <div class="login-ver">v13.5</div>
   </div>
 </div>
 
@@ -545,6 +572,10 @@
                 Actualizar
               </button>
               <button class="btn-obra" id="btn-cambiar-obra" onclick="cambiarObra()" style="display:none">Cambiar obra</button>
+              <div class="fuente-toggle" id="fuente-toggle" style="display:none">
+                <button class="fuente-btn active" id="btn-fuente-wttr" onclick="cambiarFuente('wttr')">wttr.in</button>
+                <button class="fuente-btn" id="btn-fuente-om" onclick="cambiarFuente('om')">Open-Meteo</button>
+              </div>
               <div class="user-badge" id="user-badge">-</div>
               <div class="admin-badge" id="admin-badge" onclick="abrirAdmin()" style="display:none">&#9881; Admin</div>
             </div>
@@ -813,7 +844,7 @@
 // ── CONFIGURACION ─────────────────────────────────────────────
 var CLIENT_ID   = '985022387906-5h3qtmq6jifdl5jdv77o4amf9nb3mcdn.apps.googleusercontent.com';
 var API_URL     = 'https://script.google.com/macros/s/AKfycbzH5slzkOQ8fvhCt9JXIoMFNxrBZghZv34fowPI2Yk948eTxhZmHFX37InwpnxmkVBU/exec';
-var VERSION_UI  = 'v13.0';
+var VERSION_UI  = 'v13.5';
 // ─────────────────────────────────────────────────────────────
 
 var chart7Instance      = null;
@@ -835,6 +866,7 @@ var INTERVALO_AUTO_MIN  = 60;
 var deferredPrompt      = null;
 var editandoObra        = null;
 var editandoUsuario     = null;
+var fuenteActual        = 'wttr'; // 'wttr' | 'om'
 
 // ── PWA ───────────────────────────────────────────────────────
 window.addEventListener('beforeinstallprompt', function(e) {
@@ -973,9 +1005,29 @@ function cambiarObra() {
   mostrarSelector(userEmail, obrasPermitidas);
 }
 
+// ── FUENTE DE DATOS ───────────────────────────────────────────
+function cambiarFuente(fuente) {
+  if (fuente === fuenteActual) return;
+  fuenteActual = fuente;
+
+  // Actualizar toggle visual
+  document.getElementById('btn-fuente-wttr').classList.toggle('active', fuente === 'wttr');
+  document.getElementById('btn-fuente-om').classList.toggle('active',   fuente === 'om');
+
+  // Recargar dashboard con la nueva fuente
+  if (!userEmail || !obraSeleccionada) return;
+  var btn = document.getElementById('btn-refresh');
+  if (btn) btn.className = 'btn-refresh refreshing';
+  cargarDashboard(userEmail, obraSeleccionada.id);
+}
+
+function _actionData()   { return fuenteActual === 'om' ? 'dataOM'   : 'data'; }
+function _actionReport() { return fuenteActual === 'om' ? 'reportDataOM' : 'reportData'; }
+
 // ── CARGA DE DATOS ────────────────────────────────────────────
 function cargarDashboard(email, obraId) {
-  var url = API_URL + '?action=data&email=' + encodeURIComponent(email) + '&obraId=' + encodeURIComponent(obraId);
+  var action = _actionData();
+  var url = API_URL + '?action=' + action + '&email=' + encodeURIComponent(email) + '&obraId=' + encodeURIComponent(obraId);
   fetch(url)
     .then(function(r) { return r.json(); })
     .then(function(data) {
@@ -994,7 +1046,8 @@ function actualizarDatos(tipo) {
   tipo = tipo || 'manual';
   var btn = document.getElementById('btn-refresh');
   if (btn) btn.className = 'btn-refresh refreshing';
-  var url = API_URL + '?action=data&email=' + encodeURIComponent(userEmail) + '&obraId=' + encodeURIComponent(obraSeleccionada.id);
+  var action = _actionData();
+  var url = API_URL + '?action=' + action + '&email=' + encodeURIComponent(userEmail) + '&obraId=' + encodeURIComponent(obraSeleccionada.id);
   fetch(url)
     .then(function(r) { return r.json(); })
     .then(function(data) {
@@ -1124,7 +1177,7 @@ function iniciarDashboard(data) {
   document.getElementById('mob-obra-name').textContent  = (obra.id ? obra.id + ' - ' : '') + (obra.descripcion || '-');
   document.getElementById('mob-header-sub').textContent = 'Lat ' + obra.latitud + '  Lon ' + obra.longitud;
   document.getElementById('mob-user-badge').textContent = userNombre || userEmail;
-  document.getElementById('mob-version').textContent    = VERSION_UI + ' · GAS ' + (data.version || '');
+  document.getElementById('mob-version').textContent    = VERSION_UI + ' · GAS ' + (data.version || '') + ' · ' + (fuenteActual === 'om' ? 'Open-Meteo' : 'wttr.in');
   actualizarVersionDesktop(data.version);
   actualizarBtnExportar();
 
@@ -1135,6 +1188,11 @@ function iniciarDashboard(data) {
     btnCambiar.style.display       = 'inline-block';
     btnCambiarMobile.style.display = 'inline-block';
   }
+
+  // Toggle de fuente
+  document.getElementById('fuente-toggle').style.display = 'flex';
+  document.getElementById('btn-fuente-wttr').classList.toggle('active', fuenteActual === 'wttr');
+  document.getElementById('btn-fuente-om').classList.toggle('active',   fuenteActual === 'om');
 
   // Badge ADMIN
   var adminBadge   = document.getElementById('admin-badge');
@@ -1950,7 +2008,8 @@ function mostrarExportMsg(msg, ok) {
 // ── 5. VERSIÓN EN HEADER DESKTOP ─────────────────────────────
 function actualizarVersionDesktop(gasVersion) {
   var el = document.getElementById('desktop-version');
-  if (el) el.textContent = VERSION_UI + ' · GAS ' + (gasVersion || '');
+  var fuenteLabel = fuenteActual === 'om' ? 'Open-Meteo' : 'wttr.in';
+  if (el) el.textContent = VERSION_UI + ' · GAS ' + (gasVersion || '') + ' · ' + fuenteLabel;
 }
 
 // ── MOSTRAR BTN EXPORTAR SOLO DESKTOP ────────────────────────
@@ -2039,7 +2098,7 @@ function abrirInformePDF() {
   var email  = localStorage.getItem('co_email') || '';
 
   // Pedimos cualquier mes para obtener la lista de mesesDisponibles
-  fetch(API_URL + '?action=reportData&email=' + encodeURIComponent(email) +
+  fetch(API_URL + '?action=' + _actionReport() + '&email=' + encodeURIComponent(email) +
         '&obraId=' + encodeURIComponent(obraId) + '&anio=2026&mes=4')
     .then(function(r){ return r.json(); })
     .then(function(data){
@@ -2100,7 +2159,7 @@ function generarInformePDF() {
   var obraId = (window._obraActual && window._obraActual.id) || '0000';
   var email  = localStorage.getItem('co_email') || '';
 
-  fetch(API_URL + '?action=reportData&email=' + encodeURIComponent(email) +
+  fetch(API_URL + '?action=' + _actionReport() + '&email=' + encodeURIComponent(email) +
         '&obraId=' + encodeURIComponent(obraId) +
         '&anio=' + anio + '&mes=' + mes)
     .then(function(r){ return r.json(); })
@@ -2392,7 +2451,10 @@ function construirHTMLInforme(obra, ma, mant, periodo, anio, mes) {
     // FOOTER
     '<div style="border-top:0.5px solid #E0E0D8;padding-top:8px;display:flex;justify-content:space-between;align-items:center;margin-top:auto;">' +
       '<div style="font-size:7.5px;color:#aaa;">Generado por ClimaObra \u00b7 datamegashare.github.io/climaobra \u00b7 ' + tsGen + '</div>' +
-      '<div style="font-size:7.5px;color:#E87722;">v13.0</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;">' +
+        '<div style="font-size:7px;color:#888;">Fuente: <strong style="color:' + (fuenteActual === 'om' ? '#1a4088' : '#E87722') + '">' + (fuenteActual === 'om' ? 'Open-Meteo (ERA5/GFS)' : 'wttr.in / WorldWeatherOnline') + '</strong></div>' +
+        '<div style="font-size:7.5px;color:#E87722;">v13.5</div>' +
+      '</div>' +
     '</div>' +
 
     '</div>'
