@@ -2293,11 +2293,19 @@ function abrirExportar() {
   var btn = document.getElementById('btn-export-ok');
   btn.disabled = false;
   btn.textContent = 'Descargar XLSX';
+  var cancelBtn = document.getElementById('btn-export-cancel');
+  if (cancelBtn) cancelBtn.disabled = false;
   document.getElementById('export-overlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
 }
 
 function cerrarExportar() {
   document.getElementById('export-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function cerrarExportarOverlay(e) {
+  if (e.target === document.getElementById('export-overlay')) cerrarExportar();
 }
 
 function ejecutarExportar() {
@@ -2307,8 +2315,10 @@ function ejecutarExportar() {
   if (desde > hasta)    { mostrarExportMsg('La fecha inicio debe ser anterior al fin.', false); return; }
 
   var btn = document.getElementById('btn-export-ok');
+  var cancelBtn = document.getElementById('btn-export-cancel');
   btn.disabled = true;
   btn.textContent = 'Descargando...';
+  if (cancelBtn) cancelBtn.disabled = true;
   mostrarExportMsg('Consultando registros...', null);
 
   var url = API_URL +
@@ -2322,6 +2332,7 @@ function ejecutarExportar() {
     .then(function(data) {
       btn.disabled = false;
       btn.textContent = 'Descargar XLSX';
+      if (cancelBtn) cancelBtn.disabled = false;
       if (!data.ok || !data.rows) {
         mostrarExportMsg('Error: ' + (data.error || 'respuesta invalida'), false); return;
       }
@@ -2334,6 +2345,7 @@ function ejecutarExportar() {
     .catch(function(err) {
       btn.disabled = false;
       btn.textContent = 'Descargar XLSX';
+      if (cancelBtn) cancelBtn.disabled = false;
       mostrarExportMsg('Error de conexion: ' + err.message, false);
     });
 }
@@ -2381,25 +2393,34 @@ window.addEventListener('resize', actualizarBtnExportar);
 </script>
 
 <!-- ── MODAL EXPORTAR XLSX ─────────────────────────────────── -->
-<div id="export-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:2000;align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:12px;padding:28px 28px 24px;width:360px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,0.18);">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;color:#c77a06;margin-bottom:4px;">&#8595; Exportar registros</div>
-    <div id="export-obra-label" style="font-size:0.75rem;color:#888;margin-bottom:18px;"></div>
-    <div style="display:flex;gap:10px;margin-bottom:12px;">
-      <div style="flex:1;">
-        <label style="font-size:0.68rem;color:#888;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Desde</label>
-        <input type="date" id="export-desde" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.83rem;font-family:'DM Sans',sans-serif;box-sizing:border-box;">
+<div id="export-overlay" onclick="cerrarExportarOverlay(event)" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2000;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border-radius:16px;width:380px;max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,0.22);overflow:hidden;font-family:'DM Sans',sans-serif;">
+    <!-- Header oscuro -->
+    <div style="background:var(--dark);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-radius:16px 16px 0 0;">
+      <div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;color:var(--accent);">&#8595; Exportar registros</div>
+        <div id="export-obra-label" style="font-size:0.68rem;color:#94a3b8;margin-top:1px;"></div>
       </div>
-      <div style="flex:1;">
-        <label style="font-size:0.68rem;color:#888;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;">Hasta</label>
-        <input type="date" id="export-hasta" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.83rem;font-family:'DM Sans',sans-serif;box-sizing:border-box;">
-      </div>
+      <button onclick="cerrarExportar()" style="background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;padding:2px 8px;opacity:0.7;line-height:1;">&#x2715;</button>
     </div>
-    <div id="export-rango-info" style="font-size:0.72rem;color:#888;margin-bottom:14px;"></div>
-    <div id="export-msg" style="font-size:0.75rem;margin-bottom:10px;"></div>
-    <div style="display:flex;gap:8px;">
-      <button id="btn-export-ok" onclick="ejecutarExportar()" style="flex:1;padding:9px;background:#c77a06;color:#fff;border:none;border-radius:7px;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Descargar XLSX</button>
-      <button onclick="cerrarExportar()" style="flex:1;padding:9px;background:none;border:1px solid #e2e8f0;border-radius:7px;font-size:0.8rem;color:#888;cursor:pointer;font-family:'DM Sans',sans-serif;">Cancelar</button>
+    <!-- Body -->
+    <div style="padding:20px 22px 22px;">
+      <div style="display:flex;gap:10px;margin-bottom:12px;">
+        <div style="flex:1;">
+          <label style="font-size:0.62rem;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.8px;">Desde</label>
+          <input type="date" id="export-desde" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:0.83rem;font-family:'DM Sans',sans-serif;box-sizing:border-box;background:var(--bg);">
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:0.62rem;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.8px;">Hasta</label>
+          <input type="date" id="export-hasta" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:0.83rem;font-family:'DM Sans',sans-serif;box-sizing:border-box;background:var(--bg);">
+        </div>
+      </div>
+      <div id="export-rango-info" style="font-size:0.7rem;color:var(--muted);margin-bottom:10px;"></div>
+      <div id="export-msg" style="font-size:0.73rem;margin-bottom:12px;min-height:16px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button id="btn-export-ok" onclick="ejecutarExportar()" class="btn-accion" style="flex:1;justify-content:center;padding:8px;">Descargar XLSX</button>
+        <button id="btn-export-cancel" onclick="cerrarExportar()" class="btn-header" style="flex:1;justify-content:center;padding:8px;">Cancelar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2409,18 +2430,27 @@ window.addEventListener('resize', actualizarBtnExportar);
 <!-- ══════════════════════════════════════════════════════
      MODAL INFORME PDF
 ══════════════════════════════════════════════════════ -->
-<div id="overlay-informe-pdf" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2100;align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:12px;padding:26px 28px;width:380px;max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,0.18);font-family:'DM Sans',sans-serif;">
-    <div style="font-size:1rem;font-weight:600;color:#1a1a1a;margin-bottom:4px;">&#128196; Informe PDF mensual</div>
-    <div style="font-size:0.75rem;color:#888;margin-bottom:18px;">Seleccion&#225; el mes a exportar</div>
-    <div style="margin-bottom:14px;">
-      <label style="font-size:0.75rem;color:#555;display:block;margin-bottom:5px;">Per&#237;odo</label>
-      <select id="pdf-mes-select" disabled style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:0.85rem;font-family:'DM Sans',sans-serif;color:#1a1a1a;background:#fff;cursor:pointer;opacity:0.6;"></select>
+<div id="overlay-informe-pdf" onclick="cerrarPDFOverlay(event)" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2100;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border-radius:16px;width:380px;max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,0.22);overflow:hidden;font-family:'DM Sans',sans-serif;">
+    <!-- Header oscuro -->
+    <div style="background:var(--dark);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-radius:16px 16px 0 0;">
+      <div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;color:var(--accent);">&#128196; Informe PDF mensual</div>
+        <div style="font-size:0.68rem;color:#94a3b8;margin-top:1px;">Selecion&#225; el mes a exportar</div>
+      </div>
+      <button id="btn-pdf-cancel-x" onclick="cerrarInformePDF()" style="background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;padding:2px 8px;opacity:0.7;line-height:1;">&#x2715;</button>
     </div>
-    <div id="pdf-msg" style="font-size:0.75rem;color:#888;margin-bottom:12px;min-height:18px;"></div>
-    <div style="display:flex;gap:8px;">
-      <button id="btn-pdf-ok" disabled onclick="generarInformePDF()" style="flex:1;padding:9px;background:#E87722;color:#fff;border:none;border-radius:7px;font-size:0.82rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;opacity:0.6;">Generar PDF</button>
-      <button id="btn-pdf-cancel" onclick="cerrarInformePDF()" style="flex:1;padding:9px;background:none;border:1px solid #e2e8f0;border-radius:7px;font-size:0.82rem;color:#888;cursor:pointer;font-family:'DM Sans',sans-serif;">Cancelar</button>
+    <!-- Body -->
+    <div style="padding:20px 22px 22px;">
+      <div style="margin-bottom:14px;">
+        <label style="font-size:0.62rem;color:var(--muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.8px;">Per&#237;odo</label>
+        <select id="pdf-mes-select" disabled style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg);cursor:pointer;opacity:0.6;"></select>
+      </div>
+      <div id="pdf-msg" style="font-size:0.73rem;color:var(--muted);margin-bottom:12px;min-height:16px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button id="btn-pdf-ok" disabled onclick="generarInformePDF()" class="btn-accion" style="flex:1;justify-content:center;padding:8px;opacity:0.6;">Generar PDF</button>
+        <button id="btn-pdf-cancel" onclick="cerrarInformePDF()" class="btn-header" style="flex:1;justify-content:center;padding:8px;">Cancelar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2441,11 +2471,13 @@ var MESES_NOMBRES = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio',
 function abrirInformePDF() {
   var overlay = document.getElementById('overlay-informe-pdf');
   overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
 
   // Deshabilitar todo mientras carga
   var sel   = document.getElementById('pdf-mes-select');
   var btnOk = document.getElementById('btn-pdf-ok');
   var btnCx = document.getElementById('btn-pdf-cancel');
+  var btnCxX = document.getElementById('btn-pdf-cancel-x');
   sel.disabled   = true;
   btnOk.disabled = true;
   btnCx.disabled = false;
@@ -2483,8 +2515,13 @@ function abrirInformePDF() {
     });
 }
 
+function cerrarPDFOverlay(e) {
+  if (e.target === document.getElementById('overlay-informe-pdf')) cerrarInformePDF();
+}
+
 function cerrarInformePDF() {
   document.getElementById('overlay-informe-pdf').style.display = 'none';
+  document.body.style.overflow = '';
   document.getElementById('pdf-render-container').innerHTML = '';
   // Reset completo del estado del modal para que funcione al re-abrir
   var sel   = document.getElementById('pdf-mes-select');
