@@ -158,19 +158,37 @@
   .btn-obra:hover { background: var(--accent); color: #fff; }
   .btn-signout  { font-size: 0.62rem; color: var(--muted); background: none; border: none; cursor: pointer; text-decoration: underline; font-family: 'DM Sans', sans-serif; }
 
+  /* ── BOTONES HEADER — estilo pill uniforme ───────────────── */
+  .btn-header {
+    padding: 3px 10px; border-radius: 20px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--muted); font-size: 0.68rem; font-weight: 500;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    white-space: nowrap; transition: all 0.18s;
+    box-shadow: var(--shadow); display: inline-flex;
+    align-items: center; gap: 5px; text-decoration: none;
+    line-height: 1.4;
+  }
+  .btn-header:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-header:hover .refresh-icon { stroke: #fff; }
+  .btn-header.refreshing { opacity: 0.6; pointer-events: none; }
+  .btn-header.refreshing .refresh-icon { animation: spin 0.8s linear infinite; }
+
+  /* compat alias — usado en el HTML como btn-refresh */
   .btn-refresh {
     display: flex; align-items: center; gap: 5px;
-    padding: 4px 12px; border-radius: 20px;
+    padding: 3px 10px; border-radius: 20px;
     border: 1px solid var(--border); background: var(--surface);
-    color: var(--muted); font-size: 0.68rem; cursor: pointer;
-    font-family: 'DM Sans', sans-serif; transition: all 0.18s;
-    box-shadow: var(--shadow); white-space: nowrap;
+    color: var(--muted); font-size: 0.68rem; font-weight: 500;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    white-space: nowrap; transition: all 0.18s;
+    box-shadow: var(--shadow);
   }
   .btn-refresh:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
   .btn-refresh:hover .refresh-icon { stroke: #fff; }
   .btn-refresh.refreshing { opacity: 0.6; pointer-events: none; }
   .btn-refresh.refreshing .refresh-icon { animation: spin 0.8s linear infinite; }
-  .refresh-icon { width: 12px; height: 12px; flex-shrink: 0; }
+  .refresh-icon { width: 12px; height: 12px; flex-shrink: 0; stroke: currentColor; }
   .update-status { font-size: 0.62rem; color: var(--muted); white-space: nowrap; text-align: right; }
   .update-status.auto   { color: #16a34a; }
   .update-status.manual { color: #2563eb; }
@@ -428,13 +446,144 @@
     box-shadow: 0 1px 4px rgba(217,119,6,0.3);
   }
   .fuente-btn:not(.active):hover { color: var(--accent); }
-  .fuente-badge {
-    display: inline-block; font-size: 0.55rem; font-weight: 700;
-    padding: 1px 6px; border-radius: 8px; margin-left: 5px;
-    background: #fff0e4; color: var(--accent);
-    vertical-align: middle; white-space: nowrap;
+
+  /* ── MODAL FUENTES ───────────────────────────────────────── */
+  #overlay-fuentes {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55); z-index: 2200;
+    align-items: center; justify-content: center; padding: 20px;
   }
-  .fuente-badge.om { background: #e4f0ff; color: #1a4088; }
+  #modal-fuentes {
+    background: var(--surface); border-radius: var(--radius);
+    width: 100%; max-width: 820px; max-height: 88vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.25); overflow: hidden;
+  }
+  .modal-fuentes-header {
+    background: var(--dark); color: #fff;
+    padding: 14px 20px; display: flex; align-items: center; gap: 12px;
+    flex-shrink: 0;
+  }
+  .modal-fuentes-title {
+    font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem;
+    letter-spacing: 2px; color: var(--accent); flex: 1;
+  }
+  .modal-fuentes-sub { font-size: 0.68rem; color: #94a3b8; margin-top: 1px; }
+  .btn-fuentes-close {
+    background: none; border: none; color: #fff;
+    font-size: 1.3rem; cursor: pointer; padding: 2px 8px;
+    opacity: 0.7; transition: opacity 0.15s;
+  }
+  .btn-fuentes-close:hover { opacity: 1; }
+  #modal-fuentes-body { flex: 1; overflow-y: auto; }
+  .fuentes-tabs {
+    display: flex; border-bottom: 2px solid var(--border);
+    padding: 0 24px; background: #fafafa; flex-shrink: 0;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .fuentes-tab {
+    padding: 10px 16px; font-size: 0.78rem; font-weight: 600;
+    color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
+    margin-bottom: -2px; transition: all 0.15s; white-space: nowrap;
+  }
+  .fuentes-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .fuentes-tab-panel { display: none; padding: 20px 24px 28px; }
+  .fuentes-tab-panel.active { display: block; }
+  .fm-intro {
+    background: #fff8f2; border: 1px solid var(--accent);
+    border-left: 4px solid var(--accent); border-radius: 8px;
+    padding: 14px 18px; margin-bottom: 20px;
+    font-size: 0.8rem; line-height: 1.7; color: #444;
+  }
+  .fm-intro strong { color: var(--accent); }
+  .fm-section-title {
+    font-size: 0.62rem; text-transform: uppercase; letter-spacing: 1.4px;
+    color: var(--accent); font-weight: 600; margin: 18px 0 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .fm-section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+  .fm-chain {
+    display: flex; align-items: center; flex-wrap: wrap;
+    background: #f8fafc; border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 18px; gap: 0; margin-bottom: 14px;
+  }
+  .fm-node { flex:1; min-width:80px; text-align:center; padding:6px 4px; }
+  .fm-node-icon {
+    width:34px; height:34px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    margin:0 auto 5px; font-size:0.9rem;
+  }
+  .fm-node-icon.orange { background:#fff0e4; }
+  .fm-node-icon.blue   { background:#e4f0ff; }
+  .fm-node-icon.green  { background:#e4fff0; }
+  .fm-node-label { font-size:0.68rem; font-weight:600; color:var(--text); }
+  .fm-node-sub   { font-size:0.56rem; color:var(--muted); margin-top:2px; line-height:1.3; }
+  .fm-arrow { font-size:0.9rem; color:var(--accent); flex-shrink:0; padding:0 2px; }
+  .fm-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; margin-bottom:14px; }
+  .fm-card { background:#f8fafc; border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+  .fm-card-header { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
+  .fm-card-icon {
+    width:26px; height:26px; border-radius:6px;
+    background:#fff0e4; border:1px solid #f0c8a0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.8rem; flex-shrink:0;
+  }
+  .fm-card-icon.blue-icon { background:#e4f0ff; border-color:#a0c0f0; }
+  .fm-card-title { font-size:0.75rem; font-weight:600; color:var(--text); }
+  .fm-card-url   { font-size:0.58rem; color:var(--muted); }
+  .fm-card p     { font-size:0.72rem; color:#555; line-height:1.6; }
+  .fm-tag {
+    display:inline-block; font-size:0.55rem; padding:2px 6px;
+    border-radius:20px; margin-top:5px; font-weight:500; margin-right:3px;
+  }
+  .fm-tag-free    { background:#e4fff0; color:#1a6638; }
+  .fm-tag-global  { background:#e4f0ff; color:#1a4088; }
+  .fm-tag-oficial { background:#fff0e4; color:#884400; }
+  .fm-alcance { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+  .fm-alcance-box { background:#f8fafc; border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+  .fm-alcance-box.si { border-left:3px solid #4CAF7D; }
+  .fm-alcance-box.no { border-left:3px solid #E24B4A; }
+  .fm-alcance-box h4 { font-size:0.7rem; font-weight:600; margin-bottom:7px; }
+  .fm-alcance-box.si h4 { color:#2a7a50; }
+  .fm-alcance-box.no h4 { color:#a02020; }
+  .fm-alcance-box ul { list-style:none; padding:0; }
+  .fm-alcance-box li { font-size:0.7rem; color:#555; padding:2px 0; line-height:1.5; display:flex; gap:5px; }
+  .fm-alcance-box.si li::before { content:'✓'; color:#4CAF7D; font-weight:600; flex-shrink:0; }
+  .fm-alcance-box.no li::before { content:'✕'; color:#E24B4A; font-weight:600; flex-shrink:0; }
+  .fm-argumento {
+    background:#f8fafc; border:1px solid var(--border);
+    border-left:4px solid var(--accent); border-radius:8px;
+    padding:12px 16px; font-size:0.75rem; line-height:1.8; color:#444; font-style:italic;
+  }
+  .fm-argumento strong { color:var(--text); font-style:normal; }
+  .fm-var-table {
+    width:100%; border-collapse:collapse; background:#f8fafc;
+    border-radius:10px; overflow:hidden; border:1px solid var(--border);
+    font-size:0.72rem; margin-bottom:14px;
+  }
+  .fm-var-table th {
+    background:#f1f5f9; padding:7px 10px; text-align:left;
+    font-size:0.6rem; text-transform:uppercase; letter-spacing:.8px;
+    color:var(--muted); font-weight:500; border-bottom:1px solid var(--border);
+  }
+  .fm-var-table td { padding:7px 10px; border-bottom:1px solid #f0ece6; color:#444; }
+  .fm-var-table tr:last-child td { border-bottom:none; }
+  .fm-stack { display:flex; flex-direction:column; gap:7px; }
+  .fm-stack-item {
+    background:#f8fafc; border:1px solid var(--border);
+    border-radius:8px; padding:9px 12px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .fm-stack-dot { width:8px; height:8px; border-radius:50%; background:var(--accent); flex-shrink:0; }
+  .fm-stack-dot.blue { background:#1a4088; }
+  .fm-stack-name { font-size:0.72rem; font-weight:600; color:var(--text); min-width:150px; }
+  .fm-stack-desc { font-size:0.68rem; color:#666; flex:1; }
+  .fm-stack-badge { font-size:0.55rem; font-weight:600; padding:2px 7px; border-radius:20px; background:#e4fff0; color:#1a6638; flex-shrink:0; }
+  @media (max-width:600px) {
+    .fm-alcance { grid-template-columns:1fr; }
+    .fm-chain { flex-direction:column; gap:2px; }
+    .fm-arrow { transform:rotate(90deg); }
+  }
 
   /* PWA install button */
   #btn-install { display: none; padding: 4px 10px; border-radius: 10px; border: 1px solid var(--accent); background: none; color: var(--accent); font-size: 0.62rem; cursor: pointer; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
@@ -488,7 +637,7 @@
     <div class="login-logo">&#127959; ClimaObra</div>
     <div class="login-sub">Sistema de registro climatico para obra</div>
     <div id="g-btn-wrap"></div>
-    <div class="login-ver">v13.5</div>
+    <div class="login-ver">v13.6</div>
   </div>
 </div>
 
@@ -563,15 +712,16 @@
             <div class="update-status" id="update-status"></div>
             <div class="next-update" id="next-update"></div>
             <div class="header-actions">
-              <button id="btn-install" onclick="instalarPWA()">&#128187; Instalar</button>
-              <button class="btn-refresh" id="btn-refresh" onclick="actualizarDatos('manual')">
+              <button class="btn-header" id="btn-install" onclick="instalarPWA()" style="display:none">&#128187; Instalar</button>
+              <button class="btn-refresh btn-header" id="btn-refresh" onclick="actualizarDatos('manual')">
                 <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="23 4 23 10 17 10"></polyline>
                   <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
                 </svg>
                 Actualizar
               </button>
-              <button class="btn-obra" id="btn-cambiar-obra" onclick="cambiarObra()" style="display:none">Cambiar obra</button>
+              <button class="btn-header" id="btn-cambiar-obra" onclick="cambiarObra()" style="display:none">⇄ Cambiar obra</button>
+              <button class="btn-header" id="btn-fuentes" onclick="abrirFuentes()" style="display:none">📋 Metodología</button>
               <div class="fuente-toggle" id="fuente-toggle" style="display:none">
                 <button class="fuente-btn active" id="btn-fuente-wttr" onclick="cambiarFuente('wttr')">wttr.in</button>
                 <button class="fuente-btn" id="btn-fuente-om" onclick="cambiarFuente('om')">Open-Meteo</button>
@@ -840,11 +990,169 @@
 
 <div id="hm-tooltip"></div>
 
+<!-- MODAL FUENTES / METODOLOGÍA -->
+<div id="overlay-fuentes" onclick="cerrarFuentesOverlay(event)">
+  <div id="modal-fuentes">
+    <div class="modal-fuentes-header">
+      <div>
+        <div class="modal-fuentes-title">&#128203; Metodología y Fuentes</div>
+        <div class="modal-fuentes-sub">Origen, cadena y alcance de la información meteorológica</div>
+      </div>
+      <button class="btn-fuentes-close" onclick="cerrarFuentes()">&#x2715;</button>
+    </div>
+    <div id="modal-fuentes-body">
+      <!-- TABS -->
+      <div class="fuentes-tabs">
+        <div class="fuentes-tab active" id="ftab-wttr" onclick="switchFuentesTab('wttr')">wttr.in / WorldWeatherOnline</div>
+        <div class="fuentes-tab" id="ftab-om" onclick="switchFuentesTab('om')">Open-Meteo</div>
+        <div class="fuentes-tab" id="ftab-alcance" onclick="switchFuentesTab('alcance')">Alcance y limitaciones</div>
+      </div>
+
+      <!-- TAB: wttr.in -->
+      <div class="fuentes-tab-panel active" id="fpanel-wttr">
+        <div class="fm-intro">
+          ClimaObra utiliza <strong>wttr.in / WorldWeatherOnline</strong> como fuente de datos en tiempo real. Los registros se toman hora a hora durante el horario activo de cada obra, directamente por coordenadas GPS. Todos los servicios son gratuitos y públicamente auditables.
+        </div>
+        <div class="fm-section-title">Cadena de datos</div>
+        <div class="fm-chain">
+          <div class="fm-node"><div class="fm-node-icon orange">🏗️</div><div class="fm-node-label">ClimaObra</div><div class="fm-node-sub">Consulta horaria por coords GPS</div></div>
+          <div class="fm-arrow">→</div>
+          <div class="fm-node"><div class="fm-node-icon orange">🌐</div><div class="fm-node-label">wttr.in</div><div class="fm-node-sub">API pública gratuita. Open source</div></div>
+          <div class="fm-arrow">→</div>
+          <div class="fm-node"><div class="fm-node-icon blue">📡</div><div class="fm-node-label">WorldWeatherOnline</div><div class="fm-node-sub">+400.000 desarrolladores desde 2010</div></div>
+          <div class="fm-arrow">→</div>
+          <div class="fm-node"><div class="fm-node-icon blue">🛰️</div><div class="fm-node-label">Modelos globales</div><div class="fm-node-sub">GFS (NOAA), ECMWF, satélites, radares</div></div>
+          <div class="fm-arrow">→</div>
+          <div class="fm-node"><div class="fm-node-icon green">🇦🇷</div><div class="fm-node-label">SMN Argentina</div><div class="fm-node-sub">+110 estaciones. Miembro OMM desde 1872</div></div>
+        </div>
+        <div class="fm-section-title">Variables registradas</div>
+        <table class="fm-var-table">
+          <thead><tr><th>Variable</th><th>Unidad</th><th>Fuente</th><th>Precisión típica</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Temperatura</strong></td><td>°C</td><td>Modelo interpolado a coords GPS</td><td>±1–2°C respecto a estación más cercana</td></tr>
+            <tr><td><strong>Sensación térmica</strong></td><td>°C</td><td>Calculada (temp + viento + humedad)</td><td>±2–3°C</td></tr>
+            <tr><td><strong>Precipitación</strong></td><td>mm</td><td>Modelo de precipitación global</td><td>Referencial — no equivale a pluviómetro físico</td></tr>
+            <tr><td><strong>Humedad relativa</strong></td><td>%</td><td>Modelo interpolado</td><td>±5–10%</td></tr>
+            <tr><td><strong>Velocidad del viento</strong></td><td>km/h</td><td>Modelo interpolado a coords GPS</td><td>±3–5 km/h respecto a anemómetro local</td></tr>
+            <tr><td><strong>Descripción del tiempo</strong></td><td>texto</td><td>Código WWO traducido</td><td>Clasificación cualitativa del modelo</td></tr>
+          </tbody>
+        </table>
+        <div class="fm-section-title">Argumento ante clientes y auditorías</div>
+        <div class="fm-argumento">
+          "Los datos climáticos registrados por ClimaObra provienen de <strong>WorldWeatherOnline</strong>, proveedor meteorológico utilizado por más de 400.000 desarrolladores a nivel global desde 2010, que integra datos de modelos numéricos internacionales —GFS de la NOAA y ECMWF del Centro Europeo— alimentados por la red global de observaciones de la <strong>Organización Meteorológica Mundial (OMM)</strong>. Para Argentina, esta red incluye las más de 110 estaciones del <strong>Servicio Meteorológico Nacional (SMN)</strong>, organismo oficial miembro de la OMM desde 1872. El acceso se realiza a través de <strong>wttr.in</strong>, servicio de código abierto con decenas de millones de consultas diarias. Los datos se almacenan con timestamp en Google Sheets, generando un registro histórico trazable por obra y coordenada GPS."
+        </div>
+      </div>
+
+      <!-- TAB: Open-Meteo -->
+      <div class="fuentes-tab-panel" id="fpanel-om">
+        <div class="fm-intro">
+          <strong>Open-Meteo</strong> es la fuente secundaria de ClimaObra. Provee datos históricos diarios del día anterior, cargados automáticamente a las 05:00 hs. Se basa en reanalysis ERA5 del ECMWF — el conjunto de datos meteorológicos históricos más preciso disponible públicamente.
+        </div>
+        <div class="fm-section-title">Cadena de datos</div>
+        <div class="fm-chain">
+          <div class="fm-node"><div class="fm-node-icon orange">🏗️</div><div class="fm-node-label">ClimaObra</div><div class="fm-node-sub">Trigger diario 05:00 hs</div></div>
+          <div class="fm-arrow">→</div>
+          <div class="fm-node"><div class="fm-node-icon blue">🌍</div><div class="fm-node-label">Open-Meteo</div><div class="fm-node-sub">API gratuita. open-meteo.com</div></div>
+          <div class="fm-arrow">→</div>
+          <div class="fm-node"><div class="fm-node-icon blue">📊</div><div class="fm-node-label">ERA5 / GFS</div><div class="fm-node-sub">Reanalysis ECMWF. Resolución 9km</div></div>
+          <div class="fm-arrow">→</div>
+          <div class="fm-node"><div class="fm-node-icon blue">🛰️</div><div class="fm-node-label">Observaciones globales</div><div class="fm-node-sub">Estaciones físicas, radar, satélite, boyas</div></div>
+          <div class="fm-arrow">→</div>
+          <div class="fm-node"><div class="fm-node-icon green">🇦🇷</div><div class="fm-node-label">SMN Argentina</div><div class="fm-node-sub">+110 estaciones físicas</div></div>
+        </div>
+        <div class="fm-section-title">¿Qué es ERA5?</div>
+        <div class="fm-cards">
+          <div class="fm-card">
+            <div class="fm-card-header"><div class="fm-card-icon blue-icon">📊</div><div><div class="fm-card-title">Reanalysis ERA5</div><div class="fm-card-url">ecmwf.int · copernicus.eu</div></div></div>
+            <p>Conjunto de datos históricos del ECMWF (Centro Europeo de Predicción a Plazo Medio). Combina millones de observaciones —estaciones físicas, aviones, boyas, satélites y radares— con el modelo IFS para reconstruir el estado de la atmósfera hora por hora desde 1940 hasta el presente. Resolución horizontal de 9 km. Considerado el estándar mundial para datos climáticos históricos.</p>
+            <span class="fm-tag fm-tag-global">Estándar mundial</span>
+            <span class="fm-tag fm-tag-oficial">ECMWF</span>
+          </div>
+          <div class="fm-card">
+            <div class="fm-card-header"><div class="fm-card-icon blue-icon">🌍</div><div><div class="fm-card-title">Open-Meteo</div><div class="fm-card-url">open-meteo.com</div></div></div>
+            <p>API meteorológica gratuita y de código abierto. Provee acceso a ERA5 y otros modelos globales sin API key ni registro. Más de 80 años de datos históricos horarios para cualquier coordenada del planeta. Usado por investigadores, desarrolladores y organismos oficiales en todo el mundo.</p>
+            <span class="fm-tag fm-tag-free">Gratuito · Open Source</span>
+            <span class="fm-tag fm-tag-global">Sin API key</span>
+          </div>
+        </div>
+        <div class="fm-section-title">Variables registradas</div>
+        <table class="fm-var-table">
+          <thead><tr><th>Variable</th><th>Unidad</th><th>Fuente ERA5</th><th>Precisión típica</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Temperatura</strong></td><td>°C</td><td>temperature_2m — interpolado a coords GPS</td><td>±0.5–1°C (superior a wttr.in)</td></tr>
+            <tr><td><strong>Sensación térmica</strong></td><td>°C</td><td>apparent_temperature — calculada por modelo</td><td>±1–2°C</td></tr>
+            <tr><td><strong>Precipitación</strong></td><td>mm</td><td>precipitation — acumulado por hora</td><td>Referencial — modelo, no pluviómetro físico</td></tr>
+            <tr><td><strong>Humedad relativa</strong></td><td>%</td><td>relative_humidity_2m</td><td>±3–5%</td></tr>
+            <tr><td><strong>Velocidad del viento</strong></td><td>km/h</td><td>wind_speed_10m — interpolado a coords GPS</td><td>±2–4 km/h</td></tr>
+            <tr><td><strong>Descripción del tiempo</strong></td><td>texto</td><td>weather_code (WMO) — traducido al español</td><td>Clasificación estándar OMM</td></tr>
+          </tbody>
+        </table>
+        <div class="fm-section-title">Diferencia clave con wttr.in</div>
+        <div class="fm-cards">
+          <div class="fm-card">
+            <div class="fm-card-header"><div class="fm-card-icon">⏱️</div><div><div class="fm-card-title">wttr.in — tiempo real</div></div></div>
+            <p>Datos capturados hora a hora durante el turno de trabajo. Representan las condiciones en el momento exacto del registro. Pueden tener mayor variabilidad por ser datos "en vivo" antes de que el modelo consolide la corrida.</p>
+          </div>
+          <div class="fm-card">
+            <div class="fm-card-header"><div class="fm-card-icon blue-icon">📅</div><div><div class="fm-card-title">Open-Meteo — día anterior</div></div></div>
+            <p>Datos del día anterior ya "cerrados", cargados a las 05:00 hs. El modelo ERA5 consolida todas las observaciones disponibles para producir los valores definitivos. Generalmente más precisos y consistentes que los datos en tiempo real.</p>
+          </div>
+        </div>
+        <div class="fm-section-title">Argumento ante clientes y auditorías</div>
+        <div class="fm-argumento">
+          "Los datos climáticos en modo Open-Meteo provienen del reanalysis <strong>ERA5</strong> del <strong>ECMWF</strong> (Centro Europeo de Predicción a Plazo Medio), accedidos a través de <strong>Open-Meteo</strong>, API gratuita y de código abierto. ERA5 es considerado el conjunto de datos meteorológicos históricos más preciso disponible públicamente, con resolución de 9 km y cobertura desde 1940 al presente. Combina millones de observaciones —estaciones físicas, aviones, boyas, satélites y radares— incluyendo las más de 110 estaciones del <strong>Servicio Meteorológico Nacional de Argentina</strong>. Los datos se cargan automáticamente a las 05:00 hs de cada día para el día anterior ya consolidado, y se almacenan con timestamp en Google Sheets, generando un registro histórico trazable por obra y coordenada GPS."
+        </div>
+      </div>
+
+      <!-- TAB: Alcance -->
+      <div class="fuentes-tab-panel" id="fpanel-alcance">
+        <div class="fm-intro">
+          Independientemente de la fuente utilizada, los datos de ClimaObra son estimaciones de <strong>modelos numéricos interpolados</strong>. No provienen de instrumental físico instalado en obra. Este documento define el alcance correcto de uso.
+        </div>
+        <div class="fm-section-title">Alcance de uso</div>
+        <div class="fm-alcance">
+          <div class="fm-alcance-box si">
+            <h4>✓ Para qué es adecuado</h4>
+            <ul>
+              <li>Registro objetivo y continuo de condiciones climáticas generales</li>
+              <li>Justificación de días perdidos por lluvia o viento sobre umbral</li>
+              <li>Historial climático trazable con timestamp y coordenadas GPS</li>
+              <li>Comparación entre períodos y entre obras</li>
+              <li>Informes mensuales para reportes a clientes</li>
+              <li>Auditorías que requieran sustento de condiciones climáticas generales</li>
+            </ul>
+          </div>
+          <div class="fm-alcance-box no">
+            <h4>✕ Limitaciones a declarar</h4>
+            <ul>
+              <li>Datos de modelo interpolado, no de instrumental físico en obra</li>
+              <li>La precipitación en mm es estimación del modelo, no de pluviómetro calibrado</li>
+              <li>El viento es estimación, no de anemómetro instalado en el sitio</li>
+              <li>Eventos muy puntuales (granizo localizado) pueden no ser capturados</li>
+              <li>No reemplaza a una estación meteorológica certificada para uso legal estricto</li>
+            </ul>
+          </div>
+        </div>
+        <div class="fm-section-title">Stack tecnológico — 100% gratuito</div>
+        <div class="fm-stack">
+          <div class="fm-stack-item"><div class="fm-stack-dot"></div><div class="fm-stack-name">wttr.in</div><div class="fm-stack-desc">API meteorológica pública. Sin API key, sin registro. Tiempo real.</div><div class="fm-stack-badge">Gratuito</div></div>
+          <div class="fm-stack-item"><div class="fm-stack-dot blue"></div><div class="fm-stack-name">Open-Meteo (ERA5)</div><div class="fm-stack-desc">API histórica pública. Sin API key. Datos del día anterior consolidados.</div><div class="fm-stack-badge">Gratuito</div></div>
+          <div class="fm-stack-item"><div class="fm-stack-dot"></div><div class="fm-stack-name">Google Apps Script</div><div class="fm-stack-desc">Backend serverless. Trigger horario (wttr.in) y diario 05:00 (Open-Meteo).</div><div class="fm-stack-badge">Gratuito</div></div>
+          <div class="fm-stack-item"><div class="fm-stack-dot"></div><div class="fm-stack-name">Google Sheets</div><div class="fm-stack-desc">Base de datos. Registros, Registros_OM, Obras, Usuarios. Auditable y exportable.</div><div class="fm-stack-badge">Gratuito</div></div>
+          <div class="fm-stack-item"><div class="fm-stack-dot"></div><div class="fm-stack-name">GitHub Pages</div><div class="fm-stack-desc">Hosting estático del frontend PWA. SSL incluido.</div><div class="fm-stack-badge">Gratuito</div></div>
+          <div class="fm-stack-item"><div class="fm-stack-dot"></div><div class="fm-stack-name">OpenStreetMap</div><div class="fm-stack-desc">Tiles de mapa para el informe PDF. Cartografía colaborativa global.</div><div class="fm-stack-badge">Open Data</div></div>
+        </div>
+      </div>
+
+    </div><!-- /modal-fuentes-body -->
+  </div><!-- /modal-fuentes -->
+</div><!-- /overlay-fuentes -->
+
 <script>
 // ── CONFIGURACION ─────────────────────────────────────────────
 var CLIENT_ID   = '985022387906-5h3qtmq6jifdl5jdv77o4amf9nb3mcdn.apps.googleusercontent.com';
 var API_URL     = 'https://script.google.com/macros/s/AKfycbzH5slzkOQ8fvhCt9JXIoMFNxrBZghZv34fowPI2Yk948eTxhZmHFX37InwpnxmkVBU/exec';
-var VERSION_UI  = 'v13.5';
+var VERSION_UI  = 'v13.6';
 // ─────────────────────────────────────────────────────────────
 
 var chart7Instance      = null;
@@ -1003,6 +1311,34 @@ function cambiarObra() {
   if (obrasPermitidas.length <= 1) return;
   cerrarAdmin();
   mostrarSelector(userEmail, obrasPermitidas);
+}
+
+// ── FUENTE DE DATOS ───────────────────────────────────────────
+// ── MODAL FUENTES ─────────────────────────────────────────────
+function abrirFuentes() {
+  var overlay = document.getElementById('overlay-fuentes');
+  overlay.style.display = 'flex';
+  // Activar tab correspondiente a la fuente activa
+  switchFuentesTab(fuenteActual === 'om' ? 'om' : 'wttr');
+  document.body.style.overflow = 'hidden';
+}
+
+function cerrarFuentes() {
+  document.getElementById('overlay-fuentes').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function cerrarFuentesOverlay(e) {
+  if (e.target === document.getElementById('overlay-fuentes')) cerrarFuentes();
+}
+
+function switchFuentesTab(tab) {
+  ['wttr','om','alcance'].forEach(function(t) {
+    var el   = document.getElementById('ftab-' + t);
+    var panel = document.getElementById('fpanel-' + t);
+    if (el)    el.classList.toggle('active', t === tab);
+    if (panel) panel.classList.toggle('active', t === tab);
+  });
 }
 
 // ── FUENTE DE DATOS ───────────────────────────────────────────
@@ -1190,9 +1526,13 @@ function iniciarDashboard(data) {
   }
 
   // Toggle de fuente
+  // Reset spinner si quedó girando (ej: al cambiar fuente)
+  var btnRef = document.getElementById('btn-refresh');
+  if (btnRef) btnRef.className = 'btn-refresh btn-header';
   document.getElementById('fuente-toggle').style.display = 'flex';
   document.getElementById('btn-fuente-wttr').classList.toggle('active', fuenteActual === 'wttr');
   document.getElementById('btn-fuente-om').classList.toggle('active',   fuenteActual === 'om');
+  document.getElementById('btn-fuentes').style.display = 'inline-flex';
 
   // Badge ADMIN
   var adminBadge   = document.getElementById('admin-badge');
@@ -2449,11 +2789,19 @@ function construirHTMLInforme(obra, ma, mant, periodo, anio, mes) {
     '</div>' +
 
     // FOOTER
-    '<div style="border-top:0.5px solid #E0E0D8;padding-top:8px;display:flex;justify-content:space-between;align-items:center;margin-top:auto;">' +
-      '<div style="font-size:7.5px;color:#aaa;">Generado por ClimaObra \u00b7 datamegashare.github.io/climaobra \u00b7 ' + tsGen + '</div>' +
-      '<div style="display:flex;align-items:center;gap:8px;">' +
-        '<div style="font-size:7px;color:#888;">Fuente: <strong style="color:' + (fuenteActual === 'om' ? '#1a4088' : '#E87722') + '">' + (fuenteActual === 'om' ? 'Open-Meteo (ERA5/GFS)' : 'wttr.in / WorldWeatherOnline') + '</strong></div>' +
-        '<div style="font-size:7.5px;color:#E87722;">v13.5</div>' +
+    '<div style="border-top:0.5px solid #E0E0D8;padding-top:7px;margin-top:auto;">' +
+      '<div style="font-size:6.8px;color:#777;line-height:1.6;margin-bottom:5px;font-style:italic;">' +
+        (fuenteActual === 'om'
+          ? 'Datos obtenidos de <strong>Open-Meteo</strong> (ERA5 — ECMWF), reanalysis histórico con resolución de 9 km. Combina observaciones de estaciones físicas, radares, satélites y boyas —incluyendo las estaciones del <strong>SMN Argentina</strong> (miembro OMM desde 1872)— con el modelo numérico IFS para reconstruir el estado de la atmósfera hora a hora. Los valores son estimaciones de modelo interpolado a las coordenadas GPS de la obra; no provienen de instrumental físico instalado en sitio.'
+          : 'Datos obtenidos de <strong>wttr.in / WorldWeatherOnline</strong>, proveedor meteorológico utilizado por más de 400.000 desarrolladores desde 2010. Integra modelos numéricos globales GFS (NOAA) y ECMWF, alimentados por la red de observaciones de la <strong>OMM</strong> e incluyendo las más de 110 estaciones del <strong>SMN Argentina</strong>. Los registros son tomados hora a hora durante el turno activo de la obra por coordenadas GPS. Los valores son estimaciones de modelo interpolado; no provienen de instrumental físico instalado en sitio.'
+        ) +
+      '</div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+        '<div style="font-size:7px;color:#aaa;">Generado por ClimaObra \u00b7 datamegashare.github.io/climaobra \u00b7 ' + tsGen + '</div>' +
+        '<div style="display:flex;align-items:center;gap:8px;">' +
+          '<div style="font-size:6.8px;color:#888;">Fuente: <strong style="color:' + (fuenteActual === 'om' ? '#1a4088' : '#E87722') + '">' + (fuenteActual === 'om' ? 'Open-Meteo · ERA5/ECMWF' : 'wttr.in · WorldWeatherOnline') + '</strong></div>' +
+          '<div style="font-size:7.5px;color:#E87722;">v13.6</div>' +
+        '</div>' +
       '</div>' +
     '</div>' +
 
