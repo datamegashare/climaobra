@@ -174,6 +174,20 @@
   .btn-header.refreshing { opacity: 0.6; pointer-events: none; }
   .btn-header.refreshing .refresh-icon { animation: spin 0.8s linear infinite; }
 
+  /* Botones de acción (PDF, XLSX) — pill naranja sólido */
+  .btn-accion {
+    padding: 4px 14px; border-radius: 20px;
+    background: var(--accent); color: #fff;
+    border: 1px solid var(--accent);
+    font-size: 0.72rem; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    white-space: nowrap; transition: all 0.18s;
+    box-shadow: 0 1px 4px rgba(217,119,6,0.25);
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .btn-accion:hover { background: var(--accent2, #c45e10); border-color: var(--accent2, #c45e10); }
+  .btn-accion:disabled { opacity: 0.45; cursor: not-allowed; }
+
   /* compat alias — usado en el HTML como btn-refresh */
   .btn-refresh {
     display: flex; align-items: center; gap: 5px;
@@ -454,7 +468,7 @@
     align-items: center; justify-content: center; padding: 20px;
   }
   #modal-fuentes {
-    background: var(--surface); border-radius: var(--radius);
+    background: var(--surface); border-radius: 16px;
     width: 100%; max-width: 820px; max-height: 88vh;
     display: flex; flex-direction: column;
     box-shadow: 0 8px 40px rgba(0,0,0,0.25); overflow: hidden;
@@ -462,7 +476,7 @@
   .modal-fuentes-header {
     background: var(--dark); color: #fff;
     padding: 14px 20px; display: flex; align-items: center; gap: 12px;
-    flex-shrink: 0;
+    flex-shrink: 0; border-radius: 16px 16px 0 0;
   }
   .modal-fuentes-title {
     font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem;
@@ -477,16 +491,19 @@
   .btn-fuentes-close:hover { opacity: 1; }
   #modal-fuentes-body { flex: 1; overflow-y: auto; }
   .fuentes-tabs {
-    display: flex; border-bottom: 2px solid var(--border);
-    padding: 0 24px; background: #fafafa; flex-shrink: 0;
-    position: sticky; top: 0; z-index: 10;
+    display: flex; border-bottom: 1px solid var(--border);
+    padding: 10px 16px; background: #f8fafc; flex-shrink: 0;
+    position: sticky; top: 0; z-index: 10; gap: 6px;
   }
   .fuentes-tab {
-    padding: 10px 16px; font-size: 0.78rem; font-weight: 600;
-    color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
-    margin-bottom: -2px; transition: all 0.15s; white-space: nowrap;
+    padding: 4px 14px; border-radius: 20px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--muted);
+    font-size: 0.72rem; font-weight: 600; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; white-space: nowrap;
+    transition: all 0.18s; box-shadow: var(--shadow);
   }
-  .fuentes-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .fuentes-tab:hover { border-color: var(--accent); color: var(--accent); }
+  .fuentes-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 1px 4px rgba(217,119,6,0.3); }
   .fuentes-tab-panel { display: none; padding: 20px 24px 28px; }
   .fuentes-tab-panel.active { display: block; }
   .fm-intro {
@@ -637,7 +654,7 @@
     <div class="login-logo">&#127959; ClimaObra</div>
     <div class="login-sub">Sistema de registro climatico para obra</div>
     <div id="g-btn-wrap"></div>
-    <div class="login-ver">v13.6</div>
+    <div class="login-ver">v13.7</div>
   </div>
 </div>
 
@@ -784,8 +801,8 @@
           <button class="btn-periodo"        id="btn-p28" onclick="cambiarPeriodo(28)">28 dias</button>
         </div>
         <span style="font-size:0.68rem;color:var(--muted);">temperatura - viento - lluvia</span>
-        <button id="btn-informe-pdf" onclick="abrirInformePDF()" style="display:none;margin-left:auto;padding:5px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">&#8595; Informe PDF</button>
-        <button id="btn-exportar" onclick="abrirExportar()" style="display:none;padding:5px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:0.72rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">&#8595; Exportar XLSX</button>
+        <button id="btn-informe-pdf" onclick="abrirInformePDF()" style="display:none;margin-left:auto;" class="btn-accion">&#8595; Informe PDF</button>
+        <button id="btn-exportar" onclick="abrirExportar()" style="display:none;" class="btn-accion">&#8595; Exportar XLSX</button>
       </div>
       <div class="chart-box">
         <div class="chart-wrap"><canvas id="chart7"></canvas></div>
@@ -1152,7 +1169,7 @@
 // ── CONFIGURACION ─────────────────────────────────────────────
 var CLIENT_ID   = '985022387906-5h3qtmq6jifdl5jdv77o4amf9nb3mcdn.apps.googleusercontent.com';
 var API_URL     = 'https://script.google.com/macros/s/AKfycbzH5slzkOQ8fvhCt9JXIoMFNxrBZghZv34fowPI2Yk948eTxhZmHFX37InwpnxmkVBU/exec';
-var VERSION_UI  = 'v13.6';
+var VERSION_UI  = 'v13.7';
 // ─────────────────────────────────────────────────────────────
 
 var chart7Instance      = null;
@@ -2800,7 +2817,7 @@ function construirHTMLInforme(obra, ma, mant, periodo, anio, mes) {
         '<div style="font-size:7px;color:#aaa;">Generado por ClimaObra \u00b7 datamegashare.github.io/climaobra \u00b7 ' + tsGen + '</div>' +
         '<div style="display:flex;align-items:center;gap:8px;">' +
           '<div style="font-size:6.8px;color:#888;">Fuente: <strong style="color:' + (fuenteActual === 'om' ? '#1a4088' : '#E87722') + '">' + (fuenteActual === 'om' ? 'Open-Meteo · ERA5/ECMWF' : 'wttr.in · WorldWeatherOnline') + '</strong></div>' +
-          '<div style="font-size:7.5px;color:#E87722;">v13.6</div>' +
+          '<div style="font-size:7.5px;color:#E87722;">v13.7</div>' +
         '</div>' +
       '</div>' +
     '</div>' +
