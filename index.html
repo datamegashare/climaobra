@@ -146,7 +146,9 @@
   }
   .logo         { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; color: var(--accent); letter-spacing: 2px; white-space: nowrap; }
   .header-info  { flex: 1; min-width: 0; overflow: hidden; }
-  .obra-name    { font-size: 0.9rem; color: var(--text); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .obra-name    { font-size: 0.9rem; color: var(--text); font-weight: 600; display: flex; align-items: baseline; gap: 4px; overflow: hidden; }
+  .obra-name-id { white-space: nowrap; flex-shrink: 0; }
+  .obra-name-desc { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
   .header-sub   { font-size: 0.68rem; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
   .last-update  { font-size: 0.68rem; color: var(--muted); text-align: right; line-height: 1.5; white-space: nowrap; }
@@ -725,7 +727,7 @@
     <div class="login-logo">&#127959; ClimaObra</div>
     <div class="login-sub">Sistema de registro climatico para obra</div>
     <div id="g-btn-wrap"></div>
-    <div class="login-ver">v14.1</div>
+    <div class="login-ver">v14.2</div>
   </div>
 </div>
 
@@ -879,8 +881,8 @@
           <button class="btn-periodo"        id="btn-p28" onclick="cambiarPeriodo(28)">28 dias</button>
         </div>
         <span style="font-size:0.68rem;color:var(--muted);">temperatura - viento - lluvia</span>
-        <button id="btn-informe-pdf" onclick="abrirInformePDF()" style="display:none;margin-left:auto;" class="btn-accion">&#8595; Informe PDF</button>
-        <button id="btn-comentario"  onclick="abrirComentario()" style="display:none;background:#16a34a;border-color:#16a34a;color:#fff;" class="btn-accion">&#128172; Comentario</button>
+        <button id="btn-comentario"  onclick="abrirComentario()" style="display:none;margin-left:auto;" class="btn-accion">&#128172; Comentario</button>
+        <button id="btn-informe-pdf" onclick="abrirInformePDF()" style="display:none;" class="btn-accion">&#8595; Informe PDF</button>
         <button id="btn-exportar" onclick="abrirExportar()" style="display:none;" class="btn-accion">&#8595; Exportar XLSX</button>
       </div>
       <div class="chart-box">
@@ -923,7 +925,7 @@
         <button class="btn-sel" id="btn-lluvia" onclick="cambiarModo('lluvia')">Lluvia</button>
         <button class="btn-sel" id="btn-viento" onclick="cambiarModo('viento')">Viento</button>
         <button class="btn-sel" id="btn-temp"   onclick="cambiarModo('temp')">Temperatura</button>
-        <button class="btn-sel" id="btn-comentario-hm" onclick="cambiarModo('comentario')" style="background:#dcfce7;color:#16a34a;border-color:#bbf7d0;">Comentario</button>
+        <button class="btn-sel" id="btn-comentario-hm" onclick="cambiarModo('comentario')">Comentario</button>
       </div>
       <div class="chart-box" style="padding:12px 14px;">
         <div class="heatmap-scroll"><div class="heatmap-wrap" id="heatmap"></div></div>
@@ -1249,7 +1251,7 @@
 // ── CONFIGURACION ─────────────────────────────────────────────
 var CLIENT_ID   = '985022387906-5h3qtmq6jifdl5jdv77o4amf9nb3mcdn.apps.googleusercontent.com';
 var API_URL     = 'https://script.google.com/macros/s/AKfycbzH5slzkOQ8fvhCt9JXIoMFNxrBZghZv34fowPI2Yk948eTxhZmHFX37InwpnxmkVBU/exec';
-var VERSION_UI  = 'v14.1';
+var VERSION_UI  = 'v14.2';
 // ─────────────────────────────────────────────────────────────
 
 var chart7Instance      = null;
@@ -1606,7 +1608,9 @@ function iniciarDashboard(data) {
   reiniciarTimerAuto(); iniciarReloj(); actualizarReloj();
 
   // Header desktop
-  document.getElementById('obra-name').textContent = (obra.id ? obra.id + ' - ' : '') + (obra.descripcion || '-');
+  var obraNameEl = document.getElementById('obra-name');
+  obraNameEl.innerHTML = '<span class="obra-name-id">' + (obra.id || '') + ' –</span>' +
+    '<span class="obra-name-desc">' + (obra.descripcion || '-') + '</span>';
   document.getElementById('header-sub').textContent = 'Lat ' + obra.latitud + '  Lon ' + obra.longitud + '  Rango ' + obra.horaInicio + ':00 - ' + obra.horaFin + ':00 hs';
   document.getElementById('user-badge').textContent = userNombre || userEmail;
 
@@ -1872,20 +1876,10 @@ function renderUptime60(uptime60) {
 
 // ── HEATMAP ───────────────────────────────────────────────────
 function cambiarModo(mode) {
-  ['perdido','lluvia','viento','temp'].forEach(function(b) {
-    document.getElementById('btn-'+b).className = b===mode?'btn-sel btn-sel-active':'btn-sel';
+  ['perdido','lluvia','viento','temp','comentario-hm'].forEach(function(b) {
+    var el = document.getElementById('btn-'+b);
+    if (el) el.className = b.replace('-hm','')===mode || b===mode+'-hm' ? 'btn-sel btn-sel-active' : 'btn-sel';
   });
-  // btn comentario heatmap tiene estilos propios
-  var btnCHM = document.getElementById('btn-comentario-hm');
-  if (btnCHM) {
-    if (mode === 'comentario') {
-      btnCHM.className = 'btn-sel btn-sel-active';
-      btnCHM.style.cssText = 'background:#16a34a;color:#fff;border-color:#16a34a;';
-    } else {
-      btnCHM.className = 'btn-sel';
-      btnCHM.style.cssText = 'background:#dcfce7;color:#16a34a;border-color:#bbf7d0;';
-    }
-  }
   renderHeatmap(globalAnual, mode);
 }
 
@@ -2672,33 +2666,59 @@ function cerrarComDetalle(e) {
 }
 
 function cancelarCom(fecha, hora) {
-  if (!confirm('\u00bfCancelar este comentario?')) return;
+  // Inline confirm dentro del modal de detalle (sin alert nativo)
+  var lista = document.getElementById('com-detalle-lista');
+  var confirmHtml = '<div id="com-inline-confirm" style="background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:10px 12px;margin-top:6px;">' +
+    '<div style="font-size:0.82rem;color:#dc2626;font-weight:600;margin-bottom:8px;">¿Cancelar este comentario? Esta acción no se puede deshacer.</div>' +
+    '<div style="display:flex;gap:8px;">' +
+    '<button class="btn-header" style="flex:1;justify-content:center;font-size:0.75rem;padding:5px;" onclick="document.getElementById('com-inline-confirm').remove()">No, volver</button>' +
+    '<button class="btn-accion" style="flex:1;justify-content:center;font-size:0.75rem;padding:5px;background:#dc2626;border-color:#dc2626;" onclick="confirmarCancelaCom(\'' + fecha + '\',\'' + hora + '\')">Sí, cancelar</button>' +
+    '</div></div>';
+  lista.insertAdjacentHTML('beforeend', confirmHtml);
+  document.getElementById('com-inline-confirm').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function confirmarCancelaCom(fecha, hora) {
+  var confirmEl = document.getElementById('com-inline-confirm');
+  if (confirmEl) confirmEl.remove();
   callGAS('cancelcomentario', { obraId: obraSeleccionada.id, fecha: fecha, hora: hora }, function(data) {
     if (data && data.ok) { cerrarComDetalle(); cargarComentarios(); }
-    else alert('Error: ' + (data && data.error || 'desconocido'));
+    else {
+      var lista = document.getElementById('com-detalle-lista');
+      lista.insertAdjacentHTML('beforeend', '<div style="color:#dc2626;font-size:0.75rem;padding:6px;">Error: ' + (data && data.error || 'desconocido') + '</div>');
+    }
   });
 }
 
 function abrirEditarCom(fecha, hora) {
   var com = globalComentarios.find(function(c) { return c.fecha === fecha && c.hora === hora; });
   if (!com) return;
-  cerrarComDetalle();
+  // Preparar modal ANTES de cerrar el detalle
   var parts = fecha.split('/');
   var fechaInput = parts[2] + '-' + parts[1] + '-' + parts[0];
   semActivo = com.criticidad; selSemaforo(com.criticidad);
   document.getElementById('com-texto').value = com.texto;
   document.getElementById('com-msg').textContent = '';
+  document.getElementById('com-msg').style.color = 'var(--muted)';
   document.getElementById('com-fecha').value = fechaInput;
   document.getElementById('com-fecha').disabled = true;
   document.getElementById('com-btn-guardar').textContent = 'Actualizar comentario';
   document.getElementById('com-btn-guardar').onclick = function() { actualizarComentario(fecha, hora); };
   document.getElementById('com-btn-cancelar').disabled = false;
+  var sel = document.getElementById('com-hora');
+  sel.innerHTML = '<option value="' + hora + '" selected>' + hora + '</option>';
+  sel.disabled = true;
+  // Cerrar detalle y abrir edición
+  document.getElementById('overlay-com-detalle').style.display = 'none';
+  document.getElementById('overlay-comentario').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  // Cargar horas en background (no bloquea la apertura del modal)
   callGAS('gethorasregistro', { obraId: obraSeleccionada.id, fecha: fecha }, function(data) {
-    var sel = document.getElementById('com-hora');
-    if (data && data.horas) sel.innerHTML = data.horas.map(function(h) { return '<option value="' + h + '"' + (h === hora ? ' selected' : '') + '>' + h + '</option>'; }).join('');
-    sel.disabled = true;
-    document.getElementById('overlay-comentario').style.display = 'flex';
-    document.body.style.overflow = 'hidden';
+    if (data && data.horas) {
+      sel.innerHTML = data.horas.map(function(h) {
+        return '<option value="' + h + '"' + (h === hora ? ' selected' : '') + '>' + h + '</option>';
+      }).join('');
+    }
   });
 }
 
