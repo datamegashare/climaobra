@@ -727,7 +727,7 @@
     <div class="login-logo">&#127959; ClimaObra</div>
     <div class="login-sub">Sistema de registro climatico para obra</div>
     <div id="g-btn-wrap"></div>
-    <div class="login-ver">v14.4</div>
+    <div class="login-ver">v14.5</div>
   </div>
 </div>
 
@@ -1251,7 +1251,7 @@
 // ── CONFIGURACION ─────────────────────────────────────────────
 var CLIENT_ID   = '985022387906-5h3qtmq6jifdl5jdv77o4amf9nb3mcdn.apps.googleusercontent.com';
 var API_URL     = 'https://script.google.com/macros/s/AKfycbzH5slzkOQ8fvhCt9JXIoMFNxrBZghZv34fowPI2Yk948eTxhZmHFX37InwpnxmkVBU/exec';
-var VERSION_UI  = 'v14.4';
+var VERSION_UI  = 'v14.5';
 // ─────────────────────────────────────────────────────────────
 
 var chart7Instance      = null;
@@ -2723,6 +2723,7 @@ function abrirEditarCom(fecha, hora) {
   document.getElementById('com-fecha').value = fechaInput;
   document.getElementById('com-fecha').disabled = true;
   document.getElementById('com-btn-guardar').textContent = 'Actualizar comentario';
+  document.getElementById('com-btn-guardar').disabled = false;
   document.getElementById('com-btn-guardar').onclick = function() { actualizarComentario(fecha, hora); };
   document.getElementById('com-btn-cancelar').disabled = false;
   var sel = document.getElementById('com-hora');
@@ -2852,8 +2853,8 @@ function callGAS(action, params, cb) {
 <!-- MODAL DETALLE COMENTARIOS (lista del día) -->
 <div id="overlay-com-detalle" onclick="cerrarComDetalle(event)" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2500;align-items:flex-end;justify-content:center;">
   <div id="modal-com-detalle" style="background:var(--surface);border-radius:16px 16px 0 0;width:100%;max-width:520px;overflow:hidden;box-shadow:0 -4px 24px rgba(0,0,0,0.18);">
-    <div class="mc-header">
-      <span class="mc-title" id="com-detalle-titulo">COMENTARIOS</span>
+    <div style="background:var(--dark);padding:14px 18px;border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-family:'Bebas Neue',sans-serif;font-size:1.15rem;color:var(--accent);letter-spacing:1.5px;" id="com-detalle-titulo">COMENTARIOS</span>
       <button onclick="cerrarComDetalle()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;line-height:1;">&#10005;</button>
     </div>
     <div class="mc-body" id="com-detalle-lista" style="max-height:60vh;overflow-y:auto;"></div>
