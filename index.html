@@ -145,9 +145,9 @@
     box-shadow: var(--shadow); display: flex; align-items: center; gap: 12px;
   }
   .logo         { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; color: var(--accent); letter-spacing: 2px; white-space: nowrap; }
-  .header-info  { flex: 1; min-width: 0; }
-  .obra-name    { font-size: 0.9rem; color: var(--text); font-weight: 600; }
-  .header-sub   { font-size: 0.68rem; color: var(--muted); margin-top: 1px; }
+  .header-info  { flex: 1; min-width: 0; overflow: hidden; }
+  .obra-name    { font-size: 0.9rem; color: var(--text); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .header-sub   { font-size: 0.68rem; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
   .last-update  { font-size: 0.68rem; color: var(--muted); text-align: right; line-height: 1.5; white-space: nowrap; }
   .header-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
@@ -654,7 +654,7 @@
     <div class="login-logo">&#127959; ClimaObra</div>
     <div class="login-sub">Sistema de registro climatico para obra</div>
     <div id="g-btn-wrap"></div>
-    <div class="login-ver">v13.7</div>
+    <div class="login-ver">v14.0</div>
   </div>
 </div>
 
@@ -703,13 +703,20 @@
   <div id="top-fixed">
     <div id="mobile-header-info">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-        <div class="mob-obra" id="mob-obra-name">-</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--accent);letter-spacing:1.5px;line-height:1;">🏗️ ClimaObra</span>
+        </div>
         <div style="display:flex;gap:6px;align-items:center;">
+          <div class="fuente-toggle" id="fuente-toggle-mob" style="display:none">
+            <button class="fuente-btn active" id="btn-fuente-wttr-mob" onclick="cambiarFuente('wttr')">wttr.in</button>
+            <button class="fuente-btn" id="btn-fuente-om-mob" onclick="cambiarFuente('om')">Open-Meteo</button>
+          </div>
           <button id="btn-cambiar-obra-mobile" onclick="cambiarObra()" style="display:none;padding:3px 8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:0.62rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">⇄ Obra</button>
           <button onclick="actualizarDatos('manual')" style="padding:3px 8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:0.62rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">↻ Actual.</button>
           <button id="btn-install-mobile" onclick="instalarPWA()" style="display:none;padding:3px 10px;border-radius:10px;border:1px solid var(--accent);background:none;color:var(--accent);font-size:0.62rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">⬇ Instalar</button>
         </div>
       </div>
+      <div class="mob-obra" id="mob-obra-name">-</div>
       <div class="mob-sub" id="mob-header-sub">-</div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px;">
         <span class="mob-badge" id="mob-user-badge">-</span>
@@ -1169,7 +1176,7 @@
 // ── CONFIGURACION ─────────────────────────────────────────────
 var CLIENT_ID   = '985022387906-5h3qtmq6jifdl5jdv77o4amf9nb3mcdn.apps.googleusercontent.com';
 var API_URL     = 'https://script.google.com/macros/s/AKfycbzH5slzkOQ8fvhCt9JXIoMFNxrBZghZv34fowPI2Yk948eTxhZmHFX37InwpnxmkVBU/exec';
-var VERSION_UI  = 'v13.7';
+var VERSION_UI  = 'v14.0';
 // ─────────────────────────────────────────────────────────────
 
 var chart7Instance      = null;
@@ -1363,9 +1370,11 @@ function cambiarFuente(fuente) {
   if (fuente === fuenteActual) return;
   fuenteActual = fuente;
 
-  // Actualizar toggle visual
+  // Actualizar toggle visual desktop + mobile
   document.getElementById('btn-fuente-wttr').classList.toggle('active', fuente === 'wttr');
   document.getElementById('btn-fuente-om').classList.toggle('active',   fuente === 'om');
+  document.getElementById('btn-fuente-wttr-mob').classList.toggle('active', fuente === 'wttr');
+  document.getElementById('btn-fuente-om-mob').classList.toggle('active',   fuente === 'om');
 
   // Recargar dashboard con la nueva fuente
   if (!userEmail || !obraSeleccionada) return;
@@ -1549,6 +1558,10 @@ function iniciarDashboard(data) {
   document.getElementById('fuente-toggle').style.display = 'flex';
   document.getElementById('btn-fuente-wttr').classList.toggle('active', fuenteActual === 'wttr');
   document.getElementById('btn-fuente-om').classList.toggle('active',   fuenteActual === 'om');
+  // Toggle mobile
+  document.getElementById('fuente-toggle-mob').style.display = 'flex';
+  document.getElementById('btn-fuente-wttr-mob').classList.toggle('active', fuenteActual === 'wttr');
+  document.getElementById('btn-fuente-om-mob').classList.toggle('active',   fuenteActual === 'om');
   document.getElementById('btn-fuentes').style.display = 'inline-flex';
 
   // Badge ADMIN
@@ -2350,6 +2363,14 @@ function ejecutarExportar() {
     });
 }
 
+// Nombre limpio para archivos: espacios → _, guiones múltiples → _, sin caracteres especiales
+function _descParaArchivo(desc) {
+  return desc
+    .replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ \-]/g, '')  // solo letras, números, espacios y guión
+    .trim()
+    .replace(/[\s\-]+/g, '_');                         // espacios y guiones → guión bajo único
+}
+
 function generarXLSX(headers, rows, obra) {
   var wb = XLSX.utils.book_new();
   var ws = XLSX.utils.aoa_to_sheet([headers].concat(rows));
@@ -2363,7 +2384,7 @@ function generarXLSX(headers, rows, obra) {
   var now = new Date();
   var ts  = now.getFullYear() + pad2(now.getMonth()+1) + pad2(now.getDate()) +
             '_' + pad2(now.getHours()) + pad2(now.getMinutes());
-  var descLimpia = obra.descripcion.replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ _-]/g, '').trim().replace(/\s+/g,'-');
+  var descLimpia = _descParaArchivo(obra.descripcion);
   var filename = 'ClimaObra_' + obra.id + '_' + descLimpia + '_' + ts + '.xlsx';
   XLSX.writeFile(wb, filename);
 }
@@ -2611,7 +2632,7 @@ function renderizarYCapturar(data, anio, mes, btnOk, btnCx, sel) {
                          ('0'+ahora.getHours()).slice(-2) +
                          ('0'+ahora.getMinutes()).slice(-2);
           var nombreMes = MESES_NOMBRES[mes].replace(/ /g,'_');
-          pdf.save('ClimaObra_' + obra.id + '_' + obra.descripcion.replace(/ /g,'_') +
+          pdf.save('ClimaObra_' + obra.id + '_' + _descParaArchivo(obra.descripcion) +
                    '_' + nombreMes + '_' + anio + '_' + ts + '.pdf');
 
           // Limpiar y rehabilitar
@@ -2854,7 +2875,7 @@ function construirHTMLInforme(obra, ma, mant, periodo, anio, mes) {
         '<div style="font-size:7px;color:#aaa;">Generado por ClimaObra \u00b7 datamegashare.github.io/climaobra \u00b7 ' + tsGen + '</div>' +
         '<div style="display:flex;align-items:center;gap:8px;">' +
           '<div style="font-size:6.8px;color:#888;">Fuente: <strong style="color:' + (fuenteActual === 'om' ? '#1a4088' : '#E87722') + '">' + (fuenteActual === 'om' ? 'Open-Meteo · ERA5/ECMWF' : 'wttr.in · WorldWeatherOnline') + '</strong></div>' +
-          '<div style="font-size:7.5px;color:#E87722;">v13.7</div>' +
+          '<div style="font-size:7.5px;color:#E87722;">' + VERSION_UI + '</div>' +
         '</div>' +
       '</div>' +
     '</div>' +
