@@ -461,6 +461,77 @@
   }
   .fuente-btn:not(.active):hover { color: var(--accent); }
 
+  /* ── COMENTARIOS ─────────────────────────────────────────── */
+  .com-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 0.62rem; font-weight: 600; padding: 2px 8px;
+    border-radius: 10px; cursor: pointer; white-space: nowrap;
+    transition: opacity 0.15s;
+  }
+  .com-badge:hover { opacity: 0.8; }
+  .com-badge-normal  { background: #dcfce7; color: #16a34a; }
+  .com-badge-atencion { background: #fef9c3; color: #ca8a04; }
+  .com-badge-critico  { background: #fee2e2; color: #dc2626; }
+
+  /* semáforo selector */
+  .sem-group { display: flex; gap: 8px; margin: 8px 0; }
+  .sem-btn {
+    flex: 1; padding: 7px 4px; border-radius: 10px; border: 2px solid transparent;
+    font-size: 0.75rem; font-weight: 600; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; transition: all 0.18s;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+  }
+  .sem-btn-normal   { background: #dcfce7; color: #16a34a; }
+  .sem-btn-atencion { background: #fef9c3; color: #ca8a04; }
+  .sem-btn-critico  { background: #fee2e2; color: #dc2626; }
+  .sem-btn.active   { border-color: currentColor; box-shadow: 0 0 0 2px rgba(0,0,0,0.1); }
+
+  /* modal comentario */
+  #overlay-comentario {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55); z-index: 2400;
+    align-items: flex-end; justify-content: center;
+  }
+  #modal-comentario {
+    background: var(--surface); border-radius: 16px 16px 0 0;
+    width: 100%; max-width: 520px; overflow: hidden;
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.18);
+  }
+  #modal-comentario .mc-header {
+    background: var(--dark); padding: 14px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-radius: 16px 16px 0 0;
+  }
+  #modal-comentario .mc-title {
+    font-family: 'Bebas Neue', sans-serif; font-size: 1.15rem;
+    color: var(--accent); letter-spacing: 1.5px;
+  }
+  #modal-comentario .mc-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+  .mc-label { font-size: 0.7rem; font-weight: 600; color: var(--muted); text-transform: uppercase; margin-bottom: 2px; }
+  .mc-select, .mc-textarea {
+    width: 100%; padding: 7px 10px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--bg);
+    color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem; box-sizing: border-box;
+  }
+  .mc-textarea { min-height: 70px; resize: vertical; }
+  .mc-footer { display: flex; gap: 8px; padding: 0 18px 18px; }
+
+  /* lista de comentarios en modal detalle */
+  .com-list-item {
+    padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border);
+    margin-bottom: 6px; background: var(--bg);
+  }
+  .com-list-item.cancelado { opacity: 0.45; text-decoration: line-through; }
+  .com-list-hora { font-size: 0.7rem; font-weight: 700; color: var(--accent); }
+  .com-list-texto { font-size: 0.82rem; color: var(--text); margin: 2px 0; }
+  .com-list-meta { font-size: 0.65rem; color: var(--muted); }
+
+  /* heatmap comentario */
+  .hm-com1 { background: #bbf7d0 !important; }
+  .hm-com2 { background: #fef08a !important; }
+  .hm-com3 { background: #fca5a5 !important; }
+
   /* ── MODAL FUENTES ───────────────────────────────────────── */
   #overlay-fuentes {
     display: none; position: fixed; inset: 0;
@@ -654,7 +725,7 @@
     <div class="login-logo">&#127959; ClimaObra</div>
     <div class="login-sub">Sistema de registro climatico para obra</div>
     <div id="g-btn-wrap"></div>
-    <div class="login-ver">v14.0</div>
+    <div class="login-ver">v14.1</div>
   </div>
 </div>
 
@@ -809,6 +880,7 @@
         </div>
         <span style="font-size:0.68rem;color:var(--muted);">temperatura - viento - lluvia</span>
         <button id="btn-informe-pdf" onclick="abrirInformePDF()" style="display:none;margin-left:auto;" class="btn-accion">&#8595; Informe PDF</button>
+        <button id="btn-comentario"  onclick="abrirComentario()" style="display:none;background:#16a34a;border-color:#16a34a;color:#fff;" class="btn-accion">&#128172; Comentario</button>
         <button id="btn-exportar" onclick="abrirExportar()" style="display:none;" class="btn-accion">&#8595; Exportar XLSX</button>
       </div>
       <div class="chart-box">
@@ -851,6 +923,7 @@
         <button class="btn-sel" id="btn-lluvia" onclick="cambiarModo('lluvia')">Lluvia</button>
         <button class="btn-sel" id="btn-viento" onclick="cambiarModo('viento')">Viento</button>
         <button class="btn-sel" id="btn-temp"   onclick="cambiarModo('temp')">Temperatura</button>
+        <button class="btn-sel" id="btn-comentario-hm" onclick="cambiarModo('comentario')" style="background:#dcfce7;color:#16a34a;border-color:#bbf7d0;">Comentario</button>
       </div>
       <div class="chart-box" style="padding:12px 14px;">
         <div class="heatmap-scroll"><div class="heatmap-wrap" id="heatmap"></div></div>
@@ -1176,7 +1249,7 @@
 // ── CONFIGURACION ─────────────────────────────────────────────
 var CLIENT_ID   = '985022387906-5h3qtmq6jifdl5jdv77o4amf9nb3mcdn.apps.googleusercontent.com';
 var API_URL     = 'https://script.google.com/macros/s/AKfycbzH5slzkOQ8fvhCt9JXIoMFNxrBZghZv34fowPI2Yk948eTxhZmHFX37InwpnxmkVBU/exec';
-var VERSION_UI  = 'v14.0';
+var VERSION_UI  = 'v14.1';
 // ─────────────────────────────────────────────────────────────
 
 var chart7Instance      = null;
@@ -1184,6 +1257,8 @@ var globalAnual         = [];
 var globalDias28        = [];
 var globalUptime60      = [];
 var globalObra          = {};
+var globalComentarios   = []; // comentarios activos del período actual
+var semActivo           = 'normal'; // criticidad seleccionada en modal comentario
 var userEmail           = '';
 var userRol             = '';
 var userNombre          = '';
@@ -1542,6 +1617,7 @@ function iniciarDashboard(data) {
   document.getElementById('mob-version').textContent    = VERSION_UI + ' · GAS ' + (data.version || '') + ' · ' + (fuenteActual === 'om' ? 'Open-Meteo' : 'wttr.in');
   actualizarVersionDesktop(data.version);
   actualizarBtnExportar();
+  cargarComentarios();
 
   // Botón cambiar obra (solo si hay más de una)
   var btnCambiar       = document.getElementById('btn-cambiar-obra');
@@ -1718,9 +1794,20 @@ function renderDiasList(dias) {
   var html = '';
   for (var i=dias.length-1;i>=0;i--) {
     var d = dias[i];
+    // fecha en formato dd/MM/yyyy para buscar comentarios
+    var partes = d.fecha.split('-'); // fecha viene como yyyy-MM-dd
+    var fechaArg = partes[2] + '/' + partes[1] + '/' + partes[0];
+    var coms = comentariosPorFecha(fechaArg);
+    var peor = peorCriticidad(coms);
     html += '<div class="dia-row' + (d.diaPerdido ? ' dia-perdido':'') + '">';
     html += '<div class="dia-fecha">' + formatFechaCorta(d.fecha) + '</div>';
     html += '<div class="dia-badge ' + (d.diaPerdido?'dia-badge-lost':'dia-badge-ok') + '">' + (d.diaPerdido?'Dia perdido':'Normal') + '</div>';
+    // Badge de comentarios
+    if (peor) {
+      html += '<div class="com-badge com-badge-' + peor + '" onclick="abrirComDetalle(\'' + fechaArg + '\')" title="Ver comentarios">';
+      html += semaforoIcon(peor) + ' ' + coms.length + ' comentario' + (coms.length !== 1 ? 's' : '');
+      html += '</div>';
+    }
     html += '<div class="dia-stats">';
     html += '<div class="dia-stat"><div class="dia-stat-val" style="color:var(--temp)">' + d.tempProm + ' C</div><div class="dia-stat-lbl">temp prom</div></div>';
     html += '<div class="dia-stat"><div class="dia-stat-val" style="color:var(--wind)">' + d.vientoMax + ' km/h</div><div class="dia-stat-lbl">viento max</div></div>';
@@ -1788,6 +1875,17 @@ function cambiarModo(mode) {
   ['perdido','lluvia','viento','temp'].forEach(function(b) {
     document.getElementById('btn-'+b).className = b===mode?'btn-sel btn-sel-active':'btn-sel';
   });
+  // btn comentario heatmap tiene estilos propios
+  var btnCHM = document.getElementById('btn-comentario-hm');
+  if (btnCHM) {
+    if (mode === 'comentario') {
+      btnCHM.className = 'btn-sel btn-sel-active';
+      btnCHM.style.cssText = 'background:#16a34a;color:#fff;border-color:#16a34a;';
+    } else {
+      btnCHM.className = 'btn-sel';
+      btnCHM.style.cssText = 'background:#dcfce7;color:#16a34a;border-color:#bbf7d0;';
+    }
+  }
   renderHeatmap(globalAnual, mode);
 }
 
@@ -1837,6 +1935,16 @@ function getHeatClass(d, mode) {
   if (mode==='lluvia')  return d.lluviaTotal===0?'hm-ok':d.lluviaTotal<5?'hm-r1':d.lluviaTotal<20?'hm-r2':'hm-r3';
   if (mode==='viento')  return d.vientoMax<20?'hm-ok':d.vientoMax<40?'hm-w1':d.vientoMax<60?'hm-w2':'hm-w3';
   if (mode==='temp')    return d.tempProm<10?'hm-w2':d.tempProm<20?'hm-ok':d.tempProm<28?'hm-r1':'hm-perdido';
+  if (mode==='comentario') {
+    // La fecha en globalAnual viene como 'yyyy-MM-dd', convertir a dd/MM/yyyy
+    var partes = (d.fecha||'').split('-');
+    var fechaArg = partes.length===3 ? partes[2]+'/'+partes[1]+'/'+partes[0] : d.fecha;
+    var peor = peorCriticidad(comentariosPorFecha(fechaArg));
+    if (!peor) return 'hm-nodata';
+    if (peor==='critico')  return 'hm-com3';
+    if (peor==='atencion') return 'hm-com2';
+    return 'hm-com1';
+  }
   return 'hm-ok';
 }
 function renderPerdidosBar(anual, obra) {
@@ -2406,10 +2514,221 @@ function actualizarVersionDesktop(gasVersion) {
 function actualizarBtnExportar() {
   var btn = document.getElementById('btn-exportar');
   if (!btn) return;
-  btn.style.display = (window.innerWidth > 768 && globalAnual && globalAnual.length) ? 'inline-block' : 'none';
-  var btnPdf = document.getElementById('btn-informe-pdf'); if (btnPdf) btnPdf.style.display = btn.style.display;
+  var mostrar = (window.innerWidth > 768 && globalAnual && globalAnual.length) ? 'inline-block' : 'none';
+  btn.style.display = mostrar;
+  var btnPdf = document.getElementById('btn-informe-pdf'); if (btnPdf) btnPdf.style.display = mostrar;
+  var btnCom = document.getElementById('btn-comentario');  if (btnCom) btnCom.style.display = mostrar;
 }
 window.addEventListener('resize', actualizarBtnExportar);
+
+
+// ── COMENTARIOS ───────────────────────────────────────────────
+
+function cargarComentarios() {
+  if (!userEmail || !obraSeleccionada) return;
+  var ayer = new Date(); ayer.setDate(ayer.getDate() - 28);
+  var desde = pad2(ayer.getDate()) + '/' + pad2(ayer.getMonth()+1) + '/' + ayer.getFullYear();
+  var hoy   = new Date();
+  var hasta = pad2(hoy.getDate()) + '/' + pad2(hoy.getMonth()+1) + '/' + hoy.getFullYear();
+  callGAS('getcomentarios', { obraId: obraSeleccionada.id, fechaDesde: desde, fechaHasta: hasta }, function(data) {
+    if (data && data.comentarios) {
+      globalComentarios = data.comentarios;
+      renderDiasList(filtrarDias(globalDias28, periodoActual));
+    }
+  });
+}
+
+function comentariosPorFecha(fecha) {
+  return globalComentarios.filter(function(c) { return c.fecha === fecha && c.estado === 'activo'; });
+}
+
+function peorCriticidad(coms) {
+  if (!coms || !coms.length) return null;
+  if (coms.find(function(c) { return c.criticidad === 'critico'; }))  return 'critico';
+  if (coms.find(function(c) { return c.criticidad === 'atencion'; })) return 'atencion';
+  return 'normal';
+}
+
+function semaforoIcon(criticidad) {
+  if (criticidad === 'critico')  return '\uD83D\uDD34';
+  if (criticidad === 'atencion') return '\uD83D\uDFE1';
+  return '\uD83D\uDFE2';
+}
+
+function abrirComentario() {
+  if (!obraSeleccionada) return;
+  semActivo = 'normal'; selSemaforo('normal');
+  document.getElementById('com-texto').value = '';
+  document.getElementById('com-msg').textContent = '';
+  document.getElementById('com-msg').style.color = 'var(--muted)';
+  document.getElementById('com-hora').innerHTML = '<option value="">Seleccioná una fecha primero</option>';
+  document.getElementById('com-fecha').disabled = false;
+  document.getElementById('com-hora').disabled  = false;
+  document.getElementById('com-btn-guardar').textContent = 'Guardar comentario';
+  document.getElementById('com-btn-guardar').onclick = guardarComentario;
+  var hoy = new Date();
+  var maxDate = hoy.getFullYear() + '-' + pad2(hoy.getMonth()+1) + '-' + pad2(hoy.getDate());
+  var comFecha = document.getElementById('com-fecha');
+  comFecha.max = maxDate; comFecha.value = maxDate;
+  document.getElementById('com-btn-guardar').disabled = false;
+  document.getElementById('com-btn-cancelar').disabled = false;
+  document.getElementById('overlay-comentario').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  cargarHorasComentario();
+}
+
+function cerrarComentario() {
+  document.getElementById('overlay-comentario').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function cerrarComentarioOverlay(e) {
+  if (e.target === document.getElementById('overlay-comentario')) cerrarComentario();
+}
+
+function cargarHorasComentario() {
+  var fechaInput = document.getElementById('com-fecha').value;
+  if (!fechaInput || !obraSeleccionada) return;
+  var parts = fechaInput.split('-');
+  var fechaArg = parts[2] + '/' + parts[1] + '/' + parts[0];
+  var sel = document.getElementById('com-hora');
+  sel.innerHTML = '<option value="">Cargando...</option>';
+  callGAS('gethorasregistro', { obraId: obraSeleccionada.id, fecha: fechaArg }, function(data) {
+    if (!data || !data.horas || !data.horas.length) {
+      sel.innerHTML = '<option value="">Sin registros para esa fecha</option>'; return;
+    }
+    sel.innerHTML = data.horas.map(function(h) { return '<option value="' + h + '">' + h + '</option>'; }).join('');
+  });
+}
+
+function selSemaforo(nivel) {
+  semActivo = nivel;
+  ['normal','atencion','critico'].forEach(function(n) {
+    document.getElementById('sem-'+n).classList.toggle('active', n === nivel);
+  });
+}
+
+function guardarComentario() {
+  var fechaInput = document.getElementById('com-fecha').value;
+  var hora  = document.getElementById('com-hora').value;
+  var texto = document.getElementById('com-texto').value.trim();
+  var msg   = document.getElementById('com-msg');
+  if (!fechaInput) { msg.textContent = 'Seleccion\u00e1 una fecha.'; return; }
+  if (!hora)  { msg.textContent = 'Seleccion\u00e1 una hora.'; return; }
+  if (!texto) { msg.textContent = 'El comentario no puede estar vac\u00edo.'; return; }
+  var parts = fechaInput.split('-');
+  var fechaArg = parts[2] + '/' + parts[1] + '/' + parts[0];
+  document.getElementById('com-btn-guardar').disabled = true;
+  document.getElementById('com-btn-cancelar').disabled = true;
+  msg.textContent = 'Guardando...';
+  callGAS('savecomentario', { obraId: obraSeleccionada.id, fecha: fechaArg, hora: hora, texto: texto, criticidad: semActivo }, function(data) {
+    if (data && data.ok) {
+      msg.style.color = '#16a34a'; msg.textContent = '\u2713 Comentario guardado.';
+      setTimeout(function() { cerrarComentario(); cargarComentarios(); }, 900);
+    } else {
+      msg.style.color = '#dc2626';
+      msg.textContent = data && data.error === 'ya_tiene_comentario' ? 'Ese registro ya tiene un comentario activo.' : ('Error: ' + (data && data.error || 'desconocido'));
+      document.getElementById('com-btn-guardar').disabled = false;
+      document.getElementById('com-btn-cancelar').disabled = false;
+    }
+  });
+}
+
+function abrirComDetalle(fechaArg) {
+  var coms = comentariosPorFecha(fechaArg);
+  document.getElementById('com-detalle-titulo').textContent = 'COMENTARIOS \u2014 ' + fechaArg;
+  var lista = document.getElementById('com-detalle-lista');
+  if (!coms.length) {
+    lista.innerHTML = '<div style="color:var(--muted);font-size:0.8rem;padding:6px;">Sin comentarios activos.</div>';
+  } else {
+    lista.innerHTML = coms.map(function(c) {
+      var esAutor = c.usuario.toLowerCase() === userEmail.toLowerCase();
+      var html = '<div class="com-list-item' + (c.estado === 'cancelado' ? ' cancelado' : '') + '">';
+      html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">';
+      html += '<span class="com-list-hora">' + c.hora + '</span>';
+      html += '<span class="com-badge com-badge-' + c.criticidad + '">' + semaforoIcon(c.criticidad) + ' ' + c.criticidad + '</span>';
+      if (c.estado === 'cancelado') html += '<span style="font-size:0.65rem;color:var(--muted);">cancelado</span>';
+      html += '</div><div class="com-list-texto">' + c.texto.replace(/</g,'&lt;') + '</div>';
+      html += '<div class="com-list-meta">' + c.usuario + '</div>';
+      if (esAutor && c.estado !== 'cancelado') {
+        html += '<div style="display:flex;gap:6px;margin-top:6px;">';
+        html += '<button class="btn-header" style="font-size:0.65rem;padding:2px 8px;" onclick="abrirEditarCom(\'' + c.fecha + '\',\'' + c.hora + '\')">Editar</button>';
+        html += '<button class="btn-header" style="font-size:0.65rem;padding:2px 8px;color:#dc2626;border-color:#dc2626;" onclick="cancelarCom(\'' + c.fecha + '\',\'' + c.hora + '\')">Cancelar</button>';
+        html += '</div>';
+      }
+      html += '</div>';
+      return html;
+    }).join('');
+  }
+  document.getElementById('overlay-com-detalle').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function cerrarComDetalle(e) {
+  if (!e || e.target === document.getElementById('overlay-com-detalle')) {
+    document.getElementById('overlay-com-detalle').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+}
+
+function cancelarCom(fecha, hora) {
+  if (!confirm('\u00bfCancelar este comentario?')) return;
+  callGAS('cancelcomentario', { obraId: obraSeleccionada.id, fecha: fecha, hora: hora }, function(data) {
+    if (data && data.ok) { cerrarComDetalle(); cargarComentarios(); }
+    else alert('Error: ' + (data && data.error || 'desconocido'));
+  });
+}
+
+function abrirEditarCom(fecha, hora) {
+  var com = globalComentarios.find(function(c) { return c.fecha === fecha && c.hora === hora; });
+  if (!com) return;
+  cerrarComDetalle();
+  var parts = fecha.split('/');
+  var fechaInput = parts[2] + '-' + parts[1] + '-' + parts[0];
+  semActivo = com.criticidad; selSemaforo(com.criticidad);
+  document.getElementById('com-texto').value = com.texto;
+  document.getElementById('com-msg').textContent = '';
+  document.getElementById('com-fecha').value = fechaInput;
+  document.getElementById('com-fecha').disabled = true;
+  document.getElementById('com-btn-guardar').textContent = 'Actualizar comentario';
+  document.getElementById('com-btn-guardar').onclick = function() { actualizarComentario(fecha, hora); };
+  document.getElementById('com-btn-cancelar').disabled = false;
+  callGAS('gethorasregistro', { obraId: obraSeleccionada.id, fecha: fecha }, function(data) {
+    var sel = document.getElementById('com-hora');
+    if (data && data.horas) sel.innerHTML = data.horas.map(function(h) { return '<option value="' + h + '"' + (h === hora ? ' selected' : '') + '>' + h + '</option>'; }).join('');
+    sel.disabled = true;
+    document.getElementById('overlay-comentario').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  });
+}
+
+function actualizarComentario(fecha, hora) {
+  var texto = document.getElementById('com-texto').value.trim();
+  var msg   = document.getElementById('com-msg');
+  if (!texto) { msg.textContent = 'El comentario no puede estar vac\u00edo.'; return; }
+  document.getElementById('com-btn-guardar').disabled = true;
+  msg.textContent = 'Actualizando...';
+  callGAS('editcomentario', { obraId: obraSeleccionada.id, fecha: fecha, hora: hora, texto: texto, criticidad: semActivo }, function(data) {
+    document.getElementById('com-fecha').disabled = false;
+    document.getElementById('com-hora').disabled  = false;
+    document.getElementById('com-btn-guardar').textContent = 'Guardar comentario';
+    document.getElementById('com-btn-guardar').onclick = guardarComentario;
+    if (data && data.ok) {
+      msg.style.color = '#16a34a'; msg.textContent = '\u2713 Comentario actualizado.';
+      setTimeout(function() { cerrarComentario(); cargarComentarios(); }, 900);
+    } else {
+      msg.style.color = '#dc2626'; msg.textContent = 'Error: ' + (data && data.error || 'desconocido');
+      document.getElementById('com-btn-guardar').disabled = false;
+    }
+  });
+}
+
+function callGAS(action, params, cb) {
+  var qs = '?action=' + action + '&email=' + encodeURIComponent(userEmail);
+  Object.keys(params).forEach(function(k) { qs += '&' + k + '=' + encodeURIComponent(params[k]); });
+  fetch(API_URL + qs).then(function(r) { return r.json(); }).then(cb)
+    .catch(function(e) { console.error('callGAS error', action, e); });
+}
 
 </script>
 
@@ -2451,6 +2770,59 @@ window.addEventListener('resize', actualizarBtnExportar);
 <!-- ══════════════════════════════════════════════════════
      MODAL INFORME PDF
 ══════════════════════════════════════════════════════ -->
+<!-- MODAL COMENTARIO -->
+<div id="overlay-comentario" onclick="cerrarComentarioOverlay(event)">
+  <div id="modal-comentario">
+    <div class="mc-header">
+      <span class="mc-title">&#128172; COMENTARIO</span>
+      <button onclick="cerrarComentario()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;line-height:1;">&#10005;</button>
+    </div>
+    <div class="mc-body">
+      <div>
+        <div class="mc-label">Fecha</div>
+        <input type="date" id="com-fecha" class="mc-select" onchange="cargarHorasComentario()">
+      </div>
+      <div>
+        <div class="mc-label">Hora</div>
+        <select id="com-hora" class="mc-select">
+          <option value="">— seleccioná una fecha primero —</option>
+        </select>
+      </div>
+      <div>
+        <div class="mc-label">Criticidad</div>
+        <div class="sem-group">
+          <button class="sem-btn sem-btn-normal active"   id="sem-normal"   onclick="selSemaforo('normal')">&#128994; Normal</button>
+          <button class="sem-btn sem-btn-atencion"        id="sem-atencion" onclick="selSemaforo('atencion')">&#128993; Atención</button>
+          <button class="sem-btn sem-btn-critico"         id="sem-critico"  onclick="selSemaforo('critico')">&#128308; Crítico</button>
+        </div>
+      </div>
+      <div>
+        <div class="mc-label">Comentario</div>
+        <textarea id="com-texto" class="mc-textarea" placeholder="Describí la situación climática..."></textarea>
+      </div>
+      <div id="com-msg" style="font-size:0.75rem;color:var(--muted);min-height:16px;"></div>
+    </div>
+    <div class="mc-footer">
+      <button id="com-btn-cancelar" onclick="cerrarComentario()" class="btn-header" style="flex:1;justify-content:center;padding:8px;">Cancelar</button>
+      <button id="com-btn-guardar"  onclick="guardarComentario()" class="btn-accion" style="flex:2;justify-content:center;padding:8px;">Guardar comentario</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE COMENTARIOS (lista del día) -->
+<div id="overlay-com-detalle" onclick="cerrarComDetalle(event)" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2500;align-items:flex-end;justify-content:center;">
+  <div id="modal-com-detalle" style="background:var(--surface);border-radius:16px 16px 0 0;width:100%;max-width:520px;overflow:hidden;box-shadow:0 -4px 24px rgba(0,0,0,0.18);">
+    <div class="mc-header">
+      <span class="mc-title" id="com-detalle-titulo">COMENTARIOS</span>
+      <button onclick="cerrarComDetalle()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;line-height:1;">&#10005;</button>
+    </div>
+    <div class="mc-body" id="com-detalle-lista" style="max-height:60vh;overflow-y:auto;"></div>
+    <div style="padding:0 18px 18px;">
+      <button onclick="cerrarComDetalle()" class="btn-header" style="width:100%;justify-content:center;padding:8px;">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <div id="overlay-informe-pdf" onclick="cerrarPDFOverlay(event)" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2100;align-items:center;justify-content:center;">
   <div style="background:var(--surface);border-radius:16px;width:380px;max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,0.22);overflow:hidden;font-family:'DM Sans',sans-serif;">
     <!-- Header oscuro -->
