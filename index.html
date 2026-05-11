@@ -727,7 +727,7 @@
     <div class="login-logo">&#127959; ClimaObra</div>
     <div class="login-sub">Sistema de registro climatico para obra</div>
     <div id="g-btn-wrap"></div>
-    <div class="login-ver">v14.3</div>
+    <div class="login-ver">v14.4</div>
   </div>
 </div>
 
@@ -1251,7 +1251,7 @@
 // ── CONFIGURACION ─────────────────────────────────────────────
 var CLIENT_ID   = '985022387906-5h3qtmq6jifdl5jdv77o4amf9nb3mcdn.apps.googleusercontent.com';
 var API_URL     = 'https://script.google.com/macros/s/AKfycbzH5slzkOQ8fvhCt9JXIoMFNxrBZghZv34fowPI2Yk948eTxhZmHFX37InwpnxmkVBU/exec';
-var VERSION_UI  = 'v14.3';
+var VERSION_UI  = 'v14.4';
 // ─────────────────────────────────────────────────────────────
 
 var chart7Instance      = null;
@@ -1260,6 +1260,7 @@ var globalDias28        = [];
 var globalUptime60      = [];
 var globalObra          = {};
 var globalComentarios   = []; // comentarios activos del período actual
+var globalHorasPorDia   = {}; // { 'dd/MM/yyyy': ['08:00','09:00',...] }
 var semActivo           = 'normal'; // criticidad seleccionada en modal comentario
 var userEmail           = '';
 var userRol             = '';
@@ -1504,9 +1505,10 @@ function actualizarVistaDatos(data) {
     document.getElementById('last-update').innerHTML = 'Ultimo registro<br><strong>' + data.ultimo.timestamp + '</strong>';
     renderTarjetas(data.ultimo);
   }
-  globalAnual    = data.anual;
-  globalDias28   = data.dias   || [];
-  globalUptime60 = data.uptime60 || [];
+  globalAnual       = data.anual;
+  globalDias28      = data.dias      || [];
+  globalUptime60    = data.uptime60  || [];
+  globalHorasPorDia = data.horasPorDia || {};
   var diasFiltrados = filtrarDias(globalDias28, periodoActual);
   renderChart7(diasFiltrados);
   renderDiasList(diasFiltrados);
@@ -1667,8 +1669,9 @@ function iniciarDashboard(data) {
   var ytile  = Math.floor((1 - Math.log(Math.tan(lat * Math.PI/180) + 1/Math.cos(lat * Math.PI/180)) / Math.PI) / 2 * n);
   document.getElementById('osm-map').src = 'https://tile.openstreetmap.org/' + zoom + '/' + xtile + '/' + ytile + '.png';
 
-  globalDias28   = data.dias   || [];
-  globalUptime60 = data.uptime60 || [];
+  globalDias28      = data.dias      || [];
+  globalUptime60    = data.uptime60  || [];
+  globalHorasPorDia = data.horasPorDia || {};
   document.getElementById('btn-p14').disabled = globalDias28.length < 8;
   document.getElementById('btn-p21').disabled = globalDias28.length < 15;
   document.getElementById('btn-p28').disabled = globalDias28.length < 22;
@@ -2586,12 +2589,24 @@ function cargarHorasComentario() {
   var parts = fechaInput.split('-');
   var fechaArg = parts[2] + '/' + parts[1] + '/' + parts[0];
   var sel = document.getElementById('com-hora');
+  // Primero buscar en datos locales (instantáneo)
+  if (globalHorasPorDia[fechaArg] && globalHorasPorDia[fechaArg].length) {
+    sel.innerHTML = globalHorasPorDia[fechaArg].map(function(h) {
+      return '<option value="' + h + '">' + h + '</option>';
+    }).join('');
+    return;
+  }
+  // Fallback al GAS si la fecha no está en el período cargado
   sel.innerHTML = '<option value="">Cargando...</option>';
   callGAS('gethorasregistro', { obraId: obraSeleccionada.id, fecha: fechaArg }, function(data) {
     if (!data || !data.horas || !data.horas.length) {
       sel.innerHTML = '<option value="">Sin registros para esa fecha</option>'; return;
     }
-    sel.innerHTML = data.horas.map(function(h) { return '<option value="' + h + '">' + h + '</option>'; }).join('');
+    // Guardar en cache local para próximas consultas
+    globalHorasPorDia[fechaArg] = data.horas;
+    sel.innerHTML = data.horas.map(function(h) {
+      return '<option value="' + h + '">' + h + '</option>';
+    }).join('');
   });
 }
 
