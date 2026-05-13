@@ -1,6 +1,6 @@
-# ClimaObra — Handoff v14.5b
+# ClimaObra — Handoff v14.5c
 **Fecha:** Mayo 2026
-**Archivos entregados esta sesión:** `clima_v13_10.gs`
+**Archivos entregados esta sesión:** `clima_v13_11.gs`
 
 ---
 
@@ -189,13 +189,28 @@ v13.10 (Mayo 2026)
        fechaHasta ≥ hoy-5 → /v1/forecast (cubre ayer y días recientes)
     b. Verificado: /v1/forecast devuelve datos del día anterior correctamente
     c. Verificado: opción 7d (cargarAyerOM) insertó registros del 11/05 OK
+
+v13.11 (Mayo 2026)
+  GAS clima_v13_11.gs:
+    a. Fix HTTP 429 en trigger diario Open-Meteo: nueva función
+       obtenerClimaOMMulti() que consulta todas las obras en UNA
+       sola request usando latitude=lat1,lat2,lat3 (API multi-location).
+       _cargarDiaOM() refactorizado para usarla → 1 request/día total
+       en vez de 1 request/obra/día (3 obras = 3 requests antes).
+       obtenerClimaOMRango() y _cargarRangoOM() sin cambios
+       (cargas manuales/históricas no tienen restricción diaria).
+    b. GAS v13.10 en producción hasta este deploy — trigger 05:00
+       falló con 429 todos los días desde 08/05. Ejecutar opción 7d
+       después del deploy para recuperar días faltantes.
+
+
 ```
 
 ---
 
 ## Estado del deploy
 
-- ✅ GAS v13.10 deployado y funcionando
+- ✅ clima_v13_10.gs → clima_v13_11.gs
 - ✅ index_v14_5.html en producción (GitHub Pages, sin cambios esta sesión)
 - ✅ Trigger wttr.in activo (horario)
 - ✅ Trigger Open-Meteo activo (diario 05:00)
@@ -207,7 +222,7 @@ v13.10 (Mayo 2026)
 - ✅ Vista Anual modo comentario con heat-map de criticidad
 - ✅ Selector de horas instantáneo (datos locales)
 - ✅ 3 obras activas
-- ⏳ Trigger 05:00 del 13/05 — pendiente verificar que carga correctamente con v13.10
+- ⏳ El ⏳ de verificación del trigger → ❌ con nota de los 429, y agregás ⏳ para el v13.11.
 
 ## Pendientes
 
