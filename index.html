@@ -443,26 +443,6 @@
   .tab-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .tab-btn.active svg { stroke: var(--accent); }
 
-  /* ── TOGGLE FUENTE ───────────────────────────────────────── */
-  .fuente-toggle {
-    display: flex; align-items: center;
-    background: var(--bg); border: 1px solid var(--border);
-    border-radius: 20px; padding: 2px; gap: 0;
-    box-shadow: var(--shadow);
-  }
-  .fuente-btn {
-    padding: 3px 10px; border-radius: 16px;
-    border: none; background: none;
-    color: var(--muted); font-size: 0.62rem; font-weight: 600;
-    cursor: pointer; font-family: 'DM Sans', sans-serif;
-    white-space: nowrap; transition: all 0.18s; line-height: 1.4;
-  }
-  .fuente-btn.active {
-    background: var(--accent); color: #fff;
-    box-shadow: 0 1px 4px rgba(217,119,6,0.3);
-  }
-  .fuente-btn:not(.active):hover { color: var(--accent); }
-
   /* ── COMENTARIOS ─────────────────────────────────────────── */
   .com-badge {
     display: inline-flex; align-items: center; gap: 4px;
@@ -727,7 +707,7 @@
     <div class="login-logo">&#127959; ClimaObra</div>
     <div class="login-sub">Sistema de registro climatico para obra</div>
     <div id="g-btn-wrap"></div>
-    <div class="login-ver">v14.5</div>
+    <div class="login-ver">v15.0</div>
   </div>
 </div>
 
@@ -780,10 +760,6 @@
           <span style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--accent);letter-spacing:1.5px;line-height:1;">🏗️ ClimaObra</span>
         </div>
         <div style="display:flex;gap:6px;align-items:center;">
-          <div class="fuente-toggle" id="fuente-toggle-mob" style="display:none">
-            <button class="fuente-btn active" id="btn-fuente-wttr-mob" onclick="cambiarFuente('wttr')">wttr.in</button>
-            <button class="fuente-btn" id="btn-fuente-om-mob" onclick="cambiarFuente('om')">Open-Meteo</button>
-          </div>
           <button id="btn-cambiar-obra-mobile" onclick="cambiarObra()" style="display:none;padding:3px 8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:0.62rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">⇄ Obra</button>
           <button onclick="actualizarDatos('manual')" style="padding:3px 8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:0.62rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">↻ Actual.</button>
           <button id="btn-install-mobile" onclick="instalarPWA()" style="display:none;padding:3px 10px;border-radius:10px;border:1px solid var(--accent);background:none;color:var(--accent);font-size:0.62rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">⬇ Instalar</button>
@@ -819,10 +795,6 @@
               </button>
               <button class="btn-header" id="btn-cambiar-obra" onclick="cambiarObra()" style="display:none">⇄ Cambiar obra</button>
               <button class="btn-header" id="btn-fuentes" onclick="abrirFuentes()" style="display:none">📋 Metodología</button>
-              <div class="fuente-toggle" id="fuente-toggle" style="display:none">
-                <button class="fuente-btn active" id="btn-fuente-wttr" onclick="cambiarFuente('wttr')">wttr.in</button>
-                <button class="fuente-btn" id="btn-fuente-om" onclick="cambiarFuente('om')">Open-Meteo</button>
-              </div>
               <div class="user-badge" id="user-badge">-</div>
               <div class="admin-badge" id="admin-badge" onclick="abrirAdmin()" style="display:none">&#9881; Admin</div>
             </div>
@@ -1103,7 +1075,6 @@
       <!-- TABS -->
       <div class="fuentes-tabs">
         <div class="fuentes-tab active" id="ftab-wttr" onclick="switchFuentesTab('wttr')">wttr.in / WorldWeatherOnline</div>
-        <div class="fuentes-tab" id="ftab-om" onclick="switchFuentesTab('om')">Open-Meteo</div>
         <div class="fuentes-tab" id="ftab-alcance" onclick="switchFuentesTab('alcance')">Alcance y limitaciones</div>
       </div>
 
@@ -1142,71 +1113,10 @@
         </div>
       </div>
 
-      <!-- TAB: Open-Meteo -->
-      <div class="fuentes-tab-panel" id="fpanel-om">
-        <div class="fm-intro">
-          <strong>Open-Meteo</strong> es la fuente secundaria de ClimaObra. Provee datos históricos diarios del día anterior, cargados automáticamente a las 05:00 hs. Se basa en reanalysis ERA5 del ECMWF — el conjunto de datos meteorológicos históricos más preciso disponible públicamente.
-        </div>
-        <div class="fm-section-title">Cadena de datos</div>
-        <div class="fm-chain">
-          <div class="fm-node"><div class="fm-node-icon orange">🏗️</div><div class="fm-node-label">ClimaObra</div><div class="fm-node-sub">Trigger diario 05:00 hs</div></div>
-          <div class="fm-arrow">→</div>
-          <div class="fm-node"><div class="fm-node-icon blue">🌍</div><div class="fm-node-label">Open-Meteo</div><div class="fm-node-sub">API gratuita. open-meteo.com</div></div>
-          <div class="fm-arrow">→</div>
-          <div class="fm-node"><div class="fm-node-icon blue">📊</div><div class="fm-node-label">ERA5 / GFS</div><div class="fm-node-sub">Reanalysis ECMWF. Resolución 9km</div></div>
-          <div class="fm-arrow">→</div>
-          <div class="fm-node"><div class="fm-node-icon blue">🛰️</div><div class="fm-node-label">Observaciones globales</div><div class="fm-node-sub">Estaciones físicas, radar, satélite, boyas</div></div>
-          <div class="fm-arrow">→</div>
-          <div class="fm-node"><div class="fm-node-icon green">🇦🇷</div><div class="fm-node-label">SMN Argentina</div><div class="fm-node-sub">+110 estaciones físicas</div></div>
-        </div>
-        <div class="fm-section-title">¿Qué es ERA5?</div>
-        <div class="fm-cards">
-          <div class="fm-card">
-            <div class="fm-card-header"><div class="fm-card-icon blue-icon">📊</div><div><div class="fm-card-title">Reanalysis ERA5</div><div class="fm-card-url">ecmwf.int · copernicus.eu</div></div></div>
-            <p>Conjunto de datos históricos del ECMWF (Centro Europeo de Predicción a Plazo Medio). Combina millones de observaciones —estaciones físicas, aviones, boyas, satélites y radares— con el modelo IFS para reconstruir el estado de la atmósfera hora por hora desde 1940 hasta el presente. Resolución horizontal de 9 km. Considerado el estándar mundial para datos climáticos históricos.</p>
-            <span class="fm-tag fm-tag-global">Estándar mundial</span>
-            <span class="fm-tag fm-tag-oficial">ECMWF</span>
-          </div>
-          <div class="fm-card">
-            <div class="fm-card-header"><div class="fm-card-icon blue-icon">🌍</div><div><div class="fm-card-title">Open-Meteo</div><div class="fm-card-url">open-meteo.com</div></div></div>
-            <p>API meteorológica gratuita y de código abierto. Provee acceso a ERA5 y otros modelos globales sin API key ni registro. Más de 80 años de datos históricos horarios para cualquier coordenada del planeta. Usado por investigadores, desarrolladores y organismos oficiales en todo el mundo.</p>
-            <span class="fm-tag fm-tag-free">Gratuito · Open Source</span>
-            <span class="fm-tag fm-tag-global">Sin API key</span>
-          </div>
-        </div>
-        <div class="fm-section-title">Variables registradas</div>
-        <table class="fm-var-table">
-          <thead><tr><th>Variable</th><th>Unidad</th><th>Fuente ERA5</th><th>Precisión típica</th></tr></thead>
-          <tbody>
-            <tr><td><strong>Temperatura</strong></td><td>°C</td><td>temperature_2m — interpolado a coords GPS</td><td>±0.5–1°C (superior a wttr.in)</td></tr>
-            <tr><td><strong>Sensación térmica</strong></td><td>°C</td><td>apparent_temperature — calculada por modelo</td><td>±1–2°C</td></tr>
-            <tr><td><strong>Precipitación</strong></td><td>mm</td><td>precipitation — acumulado por hora</td><td>Referencial — modelo, no pluviómetro físico</td></tr>
-            <tr><td><strong>Humedad relativa</strong></td><td>%</td><td>relative_humidity_2m</td><td>±3–5%</td></tr>
-            <tr><td><strong>Velocidad del viento</strong></td><td>km/h</td><td>wind_speed_10m — interpolado a coords GPS</td><td>±2–4 km/h</td></tr>
-            <tr><td><strong>Descripción del tiempo</strong></td><td>texto</td><td>weather_code (WMO) — traducido al español</td><td>Clasificación estándar OMM</td></tr>
-          </tbody>
-        </table>
-        <div class="fm-section-title">Diferencia clave con wttr.in</div>
-        <div class="fm-cards">
-          <div class="fm-card">
-            <div class="fm-card-header"><div class="fm-card-icon">⏱️</div><div><div class="fm-card-title">wttr.in — tiempo real</div></div></div>
-            <p>Datos capturados hora a hora durante el turno de trabajo. Representan las condiciones en el momento exacto del registro. Pueden tener mayor variabilidad por ser datos "en vivo" antes de que el modelo consolide la corrida.</p>
-          </div>
-          <div class="fm-card">
-            <div class="fm-card-header"><div class="fm-card-icon blue-icon">📅</div><div><div class="fm-card-title">Open-Meteo — día anterior</div></div></div>
-            <p>Datos del día anterior ya "cerrados", cargados a las 05:00 hs. El modelo ERA5 consolida todas las observaciones disponibles para producir los valores definitivos. Generalmente más precisos y consistentes que los datos en tiempo real.</p>
-          </div>
-        </div>
-        <div class="fm-section-title">Argumento ante clientes y auditorías</div>
-        <div class="fm-argumento">
-          "Los datos climáticos en modo Open-Meteo provienen del reanalysis <strong>ERA5</strong> del <strong>ECMWF</strong> (Centro Europeo de Predicción a Plazo Medio), accedidos a través de <strong>Open-Meteo</strong>, API gratuita y de código abierto. ERA5 es considerado el conjunto de datos meteorológicos históricos más preciso disponible públicamente, con resolución de 9 km y cobertura desde 1940 al presente. Combina millones de observaciones —estaciones físicas, aviones, boyas, satélites y radares— incluyendo las más de 110 estaciones del <strong>Servicio Meteorológico Nacional de Argentina</strong>. Los datos se cargan automáticamente a las 05:00 hs de cada día para el día anterior ya consolidado, y se almacenan con timestamp en Google Sheets, generando un registro histórico trazable por obra y coordenada GPS."
-        </div>
-      </div>
-
       <!-- TAB: Alcance -->
       <div class="fuentes-tab-panel" id="fpanel-alcance">
         <div class="fm-intro">
-          Independientemente de la fuente utilizada, los datos de ClimaObra son estimaciones de <strong>modelos numéricos interpolados</strong>. No provienen de instrumental físico instalado en obra. Este documento define el alcance correcto de uso.
+          Los datos de ClimaObra son estimaciones de <strong>modelos numéricos interpolados</strong>. No provienen de instrumental físico instalado en obra. Este documento define el alcance correcto de uso.
         </div>
         <div class="fm-section-title">Alcance de uso</div>
         <div class="fm-alcance">
@@ -1235,9 +1145,8 @@
         <div class="fm-section-title">Stack tecnológico — 100% gratuito</div>
         <div class="fm-stack">
           <div class="fm-stack-item"><div class="fm-stack-dot"></div><div class="fm-stack-name">wttr.in</div><div class="fm-stack-desc">API meteorológica pública. Sin API key, sin registro. Tiempo real.</div><div class="fm-stack-badge">Gratuito</div></div>
-          <div class="fm-stack-item"><div class="fm-stack-dot blue"></div><div class="fm-stack-name">Open-Meteo (ERA5)</div><div class="fm-stack-desc">API histórica pública. Sin API key. Datos del día anterior consolidados.</div><div class="fm-stack-badge">Gratuito</div></div>
-          <div class="fm-stack-item"><div class="fm-stack-dot"></div><div class="fm-stack-name">Google Apps Script</div><div class="fm-stack-desc">Backend serverless. Trigger horario (wttr.in) y diario 05:00 (Open-Meteo).</div><div class="fm-stack-badge">Gratuito</div></div>
-          <div class="fm-stack-item"><div class="fm-stack-dot"></div><div class="fm-stack-name">Google Sheets</div><div class="fm-stack-desc">Base de datos. Registros, Registros_OM, Obras, Usuarios. Auditable y exportable.</div><div class="fm-stack-badge">Gratuito</div></div>
+          <div class="fm-stack-item"><div class="fm-stack-dot"></div><div class="fm-stack-name">Google Apps Script</div><div class="fm-stack-desc">Backend serverless. Trigger horario (wttr.in).</div><div class="fm-stack-badge">Gratuito</div></div>
+          <div class="fm-stack-item"><div class="fm-stack-dot"></div><div class="fm-stack-name">Google Sheets</div><div class="fm-stack-desc">Base de datos. Registros, Obras, Usuarios. Auditable y exportable.</div><div class="fm-stack-badge">Gratuito</div></div>
           <div class="fm-stack-item"><div class="fm-stack-dot"></div><div class="fm-stack-name">GitHub Pages</div><div class="fm-stack-desc">Hosting estático del frontend PWA. SSL incluido.</div><div class="fm-stack-badge">Gratuito</div></div>
           <div class="fm-stack-item"><div class="fm-stack-dot"></div><div class="fm-stack-name">OpenStreetMap</div><div class="fm-stack-desc">Tiles de mapa para el informe PDF. Cartografía colaborativa global.</div><div class="fm-stack-badge">Open Data</div></div>
         </div>
@@ -1251,7 +1160,7 @@
 // ── CONFIGURACION ─────────────────────────────────────────────
 var CLIENT_ID   = '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com';
 var API_URL     = 'https://script.google.com/macros/s/AKfycbzH5slzkOQ8fvhCt9JXIoMFNxrBZghZv34fowPI2Yk948eTxhZmHFX37InwpnxmkVBU/exec';
-var VERSION_UI  = 'v14.5a';
+var VERSION_UI  = 'v15.0';
 // ─────────────────────────────────────────────────────────────
 
 var chart7Instance      = null;
@@ -1276,7 +1185,7 @@ var INTERVALO_AUTO_MIN  = 60;
 var deferredPrompt      = null;
 var editandoObra        = null;
 var editandoUsuario     = null;
-var fuenteActual        = 'wttr'; // 'wttr' | 'om'
+// (fuenteActual eliminado en v15.0 — wttr.in es la única fuente)
 
 // ── PWA ───────────────────────────────────────────────────────
 window.addEventListener('beforeinstallprompt', function(e) {
@@ -1296,21 +1205,35 @@ function instalarPWA() {
 }
 
 // ── GOOGLE IDENTITY ───────────────────────────────────────────
+function inicializarGoogle() {
+  google.accounts.id.initialize({ client_id: CLIENT_ID, callback: onLoginGoogle, auto_select: false });
+  google.accounts.id.renderButton(document.getElementById('g-btn-wrap'), { theme: 'outline', size: 'large', text: 'signin_with', locale: 'es' });
+}
+
 window.onload = function() {
   var guardado = localStorage.getItem('co_email');
-  google.accounts.id.initialize({ client_id: CLIENT_ID, callback: onLoginGoogle, auto_select: true });
   if (guardado) {
+    // Sesión previa encontrada → entrar directo sin depender de Google
     userEmail = guardado;
     mostrarCargando('Verificando acceso...');
-    var silentOk = false;
-    var fallback = setTimeout(function() { if (!silentOk) iniciarFlujo(guardado); }, 1500);
-    google.accounts.id.prompt(function(notif) {
-      if (notif.isNotDisplayed() || notif.isSkippedMoment()) {
-        silentOk = true; clearTimeout(fallback); iniciarFlujo(guardado);
-      }
-    });
+    iniciarFlujo(guardado);
+    // Inicializar Google en background por si el usuario hace logout
+    if (typeof google !== 'undefined') {
+      inicializarGoogle();
+    } else {
+      var iv = setInterval(function() {
+        if (typeof google !== 'undefined') { clearInterval(iv); inicializarGoogle(); }
+      }, 200);
+    }
   } else {
-    google.accounts.id.renderButton(document.getElementById('g-btn-wrap'), { theme: 'outline', size: 'large', text: 'signin_with', locale: 'es' });
+    // Sin sesión previa → mostrar botón de login
+    if (typeof google !== 'undefined') {
+      inicializarGoogle();
+    } else {
+      var iv = setInterval(function() {
+        if (typeof google !== 'undefined') { clearInterval(iv); inicializarGoogle(); }
+      }, 200);
+    }
   }
 };
 
@@ -1415,13 +1338,11 @@ function cambiarObra() {
   mostrarSelector(userEmail, obrasPermitidas);
 }
 
-// ── FUENTE DE DATOS ───────────────────────────────────────────
 // ── MODAL FUENTES ─────────────────────────────────────────────
 function abrirFuentes() {
   var overlay = document.getElementById('overlay-fuentes');
   overlay.style.display = 'flex';
-  // Activar tab correspondiente a la fuente activa
-  switchFuentesTab(fuenteActual === 'om' ? 'om' : 'wttr');
+  switchFuentesTab('wttr');
   document.body.style.overflow = 'hidden';
 }
 
@@ -1435,7 +1356,7 @@ function cerrarFuentesOverlay(e) {
 }
 
 function switchFuentesTab(tab) {
-  ['wttr','om','alcance'].forEach(function(t) {
+  ['wttr','alcance'].forEach(function(t) {
     var el   = document.getElementById('ftab-' + t);
     var panel = document.getElementById('fpanel-' + t);
     if (el)    el.classList.toggle('active', t === tab);
@@ -1443,26 +1364,8 @@ function switchFuentesTab(tab) {
   });
 }
 
-// ── FUENTE DE DATOS ───────────────────────────────────────────
-function cambiarFuente(fuente) {
-  if (fuente === fuenteActual) return;
-  fuenteActual = fuente;
-
-  // Actualizar toggle visual desktop + mobile
-  document.getElementById('btn-fuente-wttr').classList.toggle('active', fuente === 'wttr');
-  document.getElementById('btn-fuente-om').classList.toggle('active',   fuente === 'om');
-  document.getElementById('btn-fuente-wttr-mob').classList.toggle('active', fuente === 'wttr');
-  document.getElementById('btn-fuente-om-mob').classList.toggle('active',   fuente === 'om');
-
-  // Recargar dashboard con la nueva fuente
-  if (!userEmail || !obraSeleccionada) return;
-  var btn = document.getElementById('btn-refresh');
-  if (btn) btn.className = 'btn-refresh refreshing';
-  cargarDashboard(userEmail, obraSeleccionada.id);
-}
-
-function _actionData()   { return fuenteActual === 'om' ? 'dataOM'   : 'data'; }
-function _actionReport() { return fuenteActual === 'om' ? 'reportDataOM' : 'reportData'; }
+function _actionData()   { return 'data'; }
+function _actionReport() { return 'reportData'; }
 
 // ── CARGA DE DATOS ────────────────────────────────────────────
 function cargarDashboard(email, obraId) {
@@ -1620,7 +1523,7 @@ function iniciarDashboard(data) {
   document.getElementById('mob-obra-name').textContent  = (obra.id ? obra.id + ' - ' : '') + (obra.descripcion || '-');
   document.getElementById('mob-header-sub').textContent = 'Lat ' + obra.latitud + '  Lon ' + obra.longitud;
   document.getElementById('mob-user-badge').textContent = userNombre || userEmail;
-  document.getElementById('mob-version').textContent    = VERSION_UI + ' · GAS ' + (data.version || '') + ' · ' + (fuenteActual === 'om' ? 'Open-Meteo' : 'wttr.in');
+  document.getElementById('mob-version').textContent    = VERSION_UI + ' · GAS ' + (data.version || '') + ' · wttr.in';
   actualizarVersionDesktop(data.version);
   actualizarBtnExportar();
   cargarComentarios();
@@ -1633,17 +1536,9 @@ function iniciarDashboard(data) {
     btnCambiarMobile.style.display = 'inline-block';
   }
 
-  // Toggle de fuente
-  // Reset spinner si quedó girando (ej: al cambiar fuente)
+  // Reset spinner si quedó girando
   var btnRef = document.getElementById('btn-refresh');
   if (btnRef) btnRef.className = 'btn-refresh btn-header';
-  document.getElementById('fuente-toggle').style.display = 'flex';
-  document.getElementById('btn-fuente-wttr').classList.toggle('active', fuenteActual === 'wttr');
-  document.getElementById('btn-fuente-om').classList.toggle('active',   fuenteActual === 'om');
-  // Toggle mobile
-  document.getElementById('fuente-toggle-mob').style.display = 'flex';
-  document.getElementById('btn-fuente-wttr-mob').classList.toggle('active', fuenteActual === 'wttr');
-  document.getElementById('btn-fuente-om-mob').classList.toggle('active',   fuenteActual === 'om');
   document.getElementById('btn-fuentes').style.display = 'inline-flex';
 
   // Badge ADMIN
@@ -2503,8 +2398,7 @@ function mostrarExportMsg(msg, ok) {
 // ── 5. VERSIÓN EN HEADER DESKTOP ─────────────────────────────
 function actualizarVersionDesktop(gasVersion) {
   var el = document.getElementById('desktop-version');
-  var fuenteLabel = fuenteActual === 'om' ? 'Open-Meteo' : 'wttr.in';
-  if (el) el.textContent = VERSION_UI + ' · GAS ' + (gasVersion || '') + ' · ' + fuenteLabel;
+  if (el) el.textContent = VERSION_UI + ' · GAS ' + (gasVersion || '') + ' · wttr.in';
 }
 
 // ── MOSTRAR BTN EXPORTAR SOLO DESKTOP ────────────────────────
@@ -3230,7 +3124,7 @@ function construirHTMLInforme(obra, ma, mant, periodo, anio, mes) {
             '<div style="font-size:7.5px;color:#888;text-transform:uppercase;letter-spacing:1px;">Informe mensual</div>' +
             '<div style="font-size:14px;font-weight:700;color:#222;">' + nombreMes + '</div>' +
             '<div style="font-size:8px;color:#aaa;">' + ma.diasRegistrados + ' d\u00edas registrados de ' + ma.diasTotales + '</div>' +
-            '<div style="font-size:8px;font-weight:600;margin-top:2px;color:' + (fuenteActual === 'om' ? '#1a4088' : '#E87722') + '">Fuente: ' + (fuenteActual === 'om' ? 'Open-Meteo \u00b7 ERA5/ECMWF' : 'wttr.in \u00b7 WorldWeatherOnline') + '</div>' +
+            '<div style="font-size:8px;font-weight:600;margin-top:2px;color:#E87722;">Fuente: wttr.in \u00b7 WorldWeatherOnline</div>' +
           '</div>' +
         '</div>' +
         '<div style="background:#FFF4EC;border-left:3px solid #E87722;padding:6px 10px;border-radius:0 4px 4px 0;">' +
@@ -3280,15 +3174,12 @@ function construirHTMLInforme(obra, ma, mant, periodo, anio, mes) {
     // FOOTER
     '<div style="border-top:0.5px solid #E0E0D8;padding-top:7px;margin-top:auto;">' +
       '<div style="font-size:6.8px;color:#777;line-height:1.6;margin-bottom:5px;font-style:italic;">' +
-        (fuenteActual === 'om'
-          ? 'Datos obtenidos de <strong>Open-Meteo</strong> (ERA5 — ECMWF), reanalysis histórico con resolución de 9 km. Combina observaciones de estaciones físicas, radares, satélites y boyas —incluyendo las estaciones del <strong>SMN Argentina</strong> (miembro OMM desde 1872)— con el modelo numérico IFS para reconstruir el estado de la atmósfera hora a hora. Los valores son estimaciones de modelo interpolado a las coordenadas GPS de la obra; no provienen de instrumental físico instalado en sitio.'
-          : 'Datos obtenidos de <strong>wttr.in / WorldWeatherOnline</strong>, proveedor meteorológico utilizado por más de 400.000 desarrolladores desde 2010. Integra modelos numéricos globales GFS (NOAA) y ECMWF, alimentados por la red de observaciones de la <strong>OMM</strong> e incluyendo las más de 110 estaciones del <strong>SMN Argentina</strong>. Los registros son tomados hora a hora durante el turno activo de la obra por coordenadas GPS. Los valores son estimaciones de modelo interpolado; no provienen de instrumental físico instalado en sitio.'
-        ) +
+        'Datos obtenidos de <strong>wttr.in / WorldWeatherOnline</strong>, proveedor meteorológico utilizado por más de 400.000 desarrolladores desde 2010. Integra modelos numéricos globales GFS (NOAA) y ECMWF, alimentados por la red de observaciones de la <strong>OMM</strong> e incluyendo las más de 110 estaciones del <strong>SMN Argentina</strong>. Los registros son tomados hora a hora durante el turno activo de la obra por coordenadas GPS. Los valores son estimaciones de modelo interpolado; no provienen de instrumental físico instalado en sitio.' +
       '</div>' +
       '<div style="display:flex;justify-content:space-between;align-items:center;">' +
         '<div style="font-size:7px;color:#aaa;">Generado por ClimaObra \u00b7 datamegashare.github.io/climaobra \u00b7 ' + tsGen + '</div>' +
         '<div style="display:flex;align-items:center;gap:8px;">' +
-          '<div style="font-size:6.8px;color:#888;">Fuente: <strong style="color:' + (fuenteActual === 'om' ? '#1a4088' : '#E87722') + '">' + (fuenteActual === 'om' ? 'Open-Meteo · ERA5/ECMWF' : 'wttr.in · WorldWeatherOnline') + '</strong></div>' +
+          '<div style="font-size:6.8px;color:#888;">Fuente: <strong style="color:#E87722;">wttr.in · WorldWeatherOnline</strong></div>' +
           '<div style="font-size:7.5px;color:#E87722;">' + VERSION_UI + '</div>' +
         '</div>' +
       '</div>' +
